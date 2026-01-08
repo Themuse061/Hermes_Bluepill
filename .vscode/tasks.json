@@ -2,9 +2,9 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "build",
+            "label": "build all",
             "type": "shell",
-            "command": "make",
+            "command": "cd ./STM32F103_Hermes ; make ; cd ../dark_times ; make ",
             "args": [],
             "group": {
                 "kind": "build",
@@ -15,9 +15,9 @@
             ]
         },
         {
-            "label": "clean",
+            "label": "clean all",
             "type": "shell",
-            "command": "make clean",
+            "command": "cd ./STM32F103_Hermes ; make clean ; cd ../dark_times ; make clean",
             "args": [],
             "group": {
                 "kind": "build",
@@ -28,9 +28,35 @@
             ]
         },
         {
-            "label": "upload",
+            "label": "upload STM32F103",
             "type": "shell",
-            "command": "make upload",
+            "command": "cd ./STM32F103_Hermes ; make upload",
+            "args": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
+        },
+        {
+            "label": "upload CH32v003",
+            "type": "shell",
+            "command": "cd ./dark_times ; make upload",
+            "args": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
+        },
+        {
+            "label": "upload all",
+            "type": "shell",
+            "command": "cd ./STM32F103_Hermes ; make upload ; cd ../dark_times ; make upload ",
             "args": [],
             "group": {
                 "kind": "build",

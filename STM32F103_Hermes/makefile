@@ -16,5 +16,5 @@ CPPFLAGS += -DSTM32F1
 add_module = libopencm3
 
 # Include main makefile
-cerys_directory := $(realpath ..)
+cerys_directory := C:/embedded_programming
 include $(cerys_directory)/_Cerys_Toolchain/cerys_makefile.mk
