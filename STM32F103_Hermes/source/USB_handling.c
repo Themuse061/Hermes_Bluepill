@@ -218,7 +218,7 @@ void USB_initialization()
 {
 
 	int i;
-
+	rcc_clock_setup_pll(&rcc_hse_configs[RCC_CLOCK_HSE8_72MHZ]);
 	rcc_periph_clock_enable(RCC_GPIOA);
 
 	// 2. LED Setup (Bluepill usually uses PC13)
