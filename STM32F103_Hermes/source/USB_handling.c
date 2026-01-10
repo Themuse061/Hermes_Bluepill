@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdint.h>
 #include <libopencm3/stm32/rcc.h>
 #include <libopencm3/stm32/gpio.h>
 #include <libopencm3/usb/usbd.h>
@@ -6,6 +7,45 @@
 #include <libopencm3/cm3/nvic.h>
 
 #define USE_INTERRUPT 1 // 1 or 0
+
+/** Write a packet
+ * @param buf pointer to user data to write
+ * @param len # of bytes
+ * @return 0 if failed, len if successful
+ */
+uint16_t USB_send_data(void *buf, uint16_t len);
+
+/** Read a packet
+ * @param buf user buffer that will receive data
+ * @param len # of bytes
+ * @return Actual # of bytes read
+ */
+uint16_t USB_read_data(void *buf, uint16_t len);
+
+usbd_device *usbd_dev;
+
+uint16_t USB_read_data(void *buf, uint16_t len)
+{
+	return usbd_ep_read_packet(usbd_dev, 0x01, buf, len);
+}
+
+uint16_t USB_send_data(void *buf, uint16_t len)
+{
+	return usbd_ep_write_packet(usbd_dev, 0x82, buf, len);
+}
+
+/** Called when USB writes to the device
+ */
+void __attribute__((weak)) USB_recieve_interrupt()
+{
+	char buf[64];
+	int len = USB_read_data(buf, 64);
+
+	if (len)
+	{
+		USB_send_data(buf, len);
+	}
+}
 
 /* --- USB DESCRIPTORS BEGIN --- */
 static const struct usb_device_descriptor dev = {
@@ -190,13 +230,7 @@ static void cdcacm_data_rx_cb(usbd_device *usbd_dev, uint8_t ep)
 	(void)ep;
 	(void)usbd_dev;
 
-	char buf[64];
-	int len = usbd_ep_read_packet(usbd_dev, 0x01, buf, 64);
-
-	if (len)
-	{
-		usbd_ep_write_packet(usbd_dev, 0x82, buf, len);
-	}
+	USB_recieve_interrupt();
 }
 
 static void cdcacm_set_config(usbd_device *usbd_dev, uint16_t wValue)
@@ -214,8 +248,6 @@ static void cdcacm_set_config(usbd_device *usbd_dev, uint16_t wValue)
 		USB_REQ_TYPE_TYPE | USB_REQ_TYPE_RECIPIENT,
 		cdcacm_control_request);
 }
-
-usbd_device *usbd_dev;
 
 void USB_initialization()
 {

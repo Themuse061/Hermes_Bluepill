@@ -28,5 +28,19 @@ int main(void)
 	gpio_clear(GPIOC, GPIO13);
 
 	while (1)
-		gpio_toggle(GPIOC, GPIO13);
+	{
+	}
+}
+
+void __attribute__((weak)) USB_recieve_interrupt()
+{
+	char buf[64];
+	int len = USB_read_data(buf, 64);
+
+	if (len)
+	{
+		USB_send_data(buf, len);
+	}
+
+	gpio_toggle(GPIOC, GPIO13);
 }
