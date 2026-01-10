@@ -6,7 +6,7 @@
     "configurations": [
         {
             "cwd": "${workspaceRoot}",
-            "executable": "./gen/main.elf",
+            "executable": "STM32F103_Hermes/generated/constant_name_elf.elf",
             "name": "Debug with OpenOCD",
             "request": "launch",
             "type": "cortex-debug",
@@ -16,7 +16,7 @@
             ],
             "configFiles": [
                 "scripts/interface/stlink.cfg",
-                "target/stm32f1x.cfg"
+                "target/stm32f1x_clone_fix.cfg"
             ],
             "runToEntryPoint": "main",
             "showDevDebugOutput": "none"

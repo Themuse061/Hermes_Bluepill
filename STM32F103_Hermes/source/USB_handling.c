@@ -3,6 +3,9 @@
 #include <libopencm3/stm32/gpio.h>
 #include <libopencm3/usb/usbd.h>
 #include <libopencm3/usb/cdc.h>
+#include <libopencm3/cm3/nvic.h>
+
+#define USE_INTERRUPT 1 // 1 or 0
 
 /* --- USB DESCRIPTORS BEGIN --- */
 static const struct usb_device_descriptor dev = {
@@ -247,9 +250,19 @@ void USB_initialization()
 						 usbd_control_buffer, sizeof(usbd_control_buffer));
 
 	usbd_register_set_config_callback(usbd_dev, cdcacm_set_config);
+
+	if (USE_INTERRUPT)
+	{
+		nvic_enable_irq(NVIC_USB_LP_CAN_RX0_IRQ);
+	}
 }
 
 void USB_poll_update()
+{
+	usbd_poll(usbd_dev);
+}
+
+void usb_lp_can_rx0_isr(void)
 {
 	usbd_poll(usbd_dev);
 }

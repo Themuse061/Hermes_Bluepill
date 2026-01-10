@@ -28,5 +28,5 @@ int main(void)
 	gpio_clear(GPIOC, GPIO13);
 
 	while (1)
-		USB_poll_update();
+		gpio_toggle(GPIOC, GPIO13);
 }
