@@ -10,25 +10,38 @@
  */
 
 #include "usb_handling.h"
+#include "systick.h"
 #include <stdlib.h>
 #include <libopencm3/stm32/rcc.h>
 #include <libopencm3/stm32/gpio.h>
 /* --- MAIN FUNCTION (FIXED) --- */
+void hardware_initalization(void);
+
+void write_ladder_red(int value)
+{
+	uint16_t state = gpio_port_read(GPIOA);
+	state = state & (value & 0b11111111);
+	state |= value;
+	gpio_port_write(GPIOA, state);
+}
+
+
 
 int main(void)
 {
-	// 1. Setup Clocks
-	rcc_clock_setup_pll(&rcc_hse_configs[RCC_CLOCK_HSE8_72MHZ]);
 
-	// Enable GPIO C (for LED) and GPIO A (for USB)
-	rcc_periph_clock_enable(RCC_GPIOC);
-	USB_initialization();
+	hardware_initalization();
 
-	// Visual indicator: Turn on LED (PC13 is usually active Low)
-	gpio_clear(GPIOC, GPIO13);
+	gpio_set(GPIOA, 0b11111111);
+	gpio_set(GPIOB, GPIO0 | GPIO1 | GPIO10 | GPIO11);
 
 	while (1)
 	{
+		for (int i = 0; i < 0b11111111; i++)
+		{
+			write_ladder_red(i);
+			delay_ms(50);
+		}
 	}
 }
 
