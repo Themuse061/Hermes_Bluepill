@@ -16,8 +16,17 @@
 #include <libopencm3/stm32/gpio.h>
 #include <libopencm3/stm32/i2c.h>
 #include <TCA9554.h>
+#include <string.h>
 
-/* --- MAIN FUNCTION (FIXED) --- */
+void *memcpy(void *dest, const void *src, size_t n)
+{
+	unsigned char *d = dest;
+	const unsigned char *s = src;
+	for (; n; n--)
+		*d++ = *s++;
+	return dest;
+}
+
 void hardware_initalization(void);
 
 void write_ladder_red(int value)
@@ -28,45 +37,88 @@ void write_ladder_red(int value)
 	gpio_port_write(GPIOA, state);
 }
 
-char buf[64];
-int len;
-int sent = 0;
-
-uint8_t full[] = {0xff, 0xcc, 0x17, 0b10101010};
-uint8_t empty[] = {0x00, 0x00, 0x00, 0x00};
+char buf[256];
+char USB_Commands[16][64] = {0};
 
 int main(void)
 {
 
 	hardware_initalization();
+	tca9554_led_write(E0, 1);
 
 	write_ladder_red(0);
 	gpio_clear(GPIOB, GPIO0 | GPIO1 | GPIO10 | GPIO11);
-
 	while (1)
 	{
-
+		delay_ms(800);
 		write_ladder_red(0);
-		delay_ms(2000);
+		delay_ms(800);
 		write_ladder_red(1);
-		i2c_transfer7(I2C1, 0x28, full, 4, 0, 0);
-		write_ladder_red(2);
-		delay_ms(2000);
-		write_ladder_red(4);
-		i2c_transfer7(I2C1, 0x28, empty, 4, 0, 0);
-		write_ladder_red(8);
-		delay_ms(2000);
 	}
 }
+
+// Usb command handlers
+void USB_command_handler_I2C_write(char *command_array);
 
 void USB_recieve_interrupt()
 {
+	write_ladder_red(2);
+	int len = USB_read_data(buf, 256);
+	write_ladder_red(4);
 
-	len = USB_read_data(buf, 64);
-
-	if (len)
+	if (len) // If any data was read
 	{
-		USB_send_data(buf, len);
-		sent = 1;
+
+		// Put commands into USB_Commands
+		int current_length = 0;
+		while ((current_length + 1) < len)
+		{
+			memcpy(&USB_Commands[current_length][0], &buf[current_length], buf[current_length] + 1);
+			current_length += buf[current_length];
+		}
+
+		// Execute the commands
+		for (int i = 0; USB_Commands[i][0] != 0; i++)
+		{
+			switch (USB_Commands[i][1])
+			{
+			case 1: // I2C Write
+				USB_command_handler_I2C_write(&USB_Commands[i][0]);
+				break;
+
+			default:
+				while (1)
+				{
+					// not implemented
+				}
+
+				break;
+			}
+		}
 	}
 }
+
+/*
+USB Packet
+all uint8_t
+
+USB -> uC
+1. Length
+2. Command type
+3. Data
+
+uC -> USB
+
+*/
+
+/*
+commands
+
+0x01 -> I2C write
+	First byte - addr Xaaaaaaa
+	rest (up to end of length) - data
+
+0x02 -> I2C read register
+
+
+*/

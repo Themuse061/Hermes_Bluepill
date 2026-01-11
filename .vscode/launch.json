@@ -7,7 +7,7 @@
         {
             "cwd": "${workspaceRoot}",
             "executable": "STM32F103_Hermes/generated/constant_name_elf.elf",
-            "name": "Debug with OpenOCD",
+            "name": "Debug STM32F103",
             "request": "launch",
             "type": "cortex-debug",
             "servertype": "openocd",
@@ -20,6 +20,6 @@
             ],
             "runToEntryPoint": "main",
             "showDevDebugOutput": "none"
-        },
+        }
     ]
 }

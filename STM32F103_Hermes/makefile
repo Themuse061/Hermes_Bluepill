@@ -5,8 +5,10 @@ flash_size	:= 128000
 ram_size 	:= 16000
 
 # ----- Compiler and Linker Flags ----- #
-ARCH_FLAGS += -Os # Optimize for size
-ARCH_FLAGS += -ggdb3 # Include debug symbols
+ARCH_FLAGS += -O0
+ARCH_FLAGS += -g
+CPPFLAGS += -g
+CPPFLAGS += -O0
 
 override LDSCRIPT = $(assorted_folder)/linker.ld
 LDFLAGS += -nostdlib
