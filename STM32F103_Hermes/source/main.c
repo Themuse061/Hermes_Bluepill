@@ -10,6 +10,7 @@
  */
 
 #include "usb_handling.h"
+#include "USB_packet_handling.h"
 #include "systick.h"
 #include <stdlib.h>
 #include <libopencm3/stm32/rcc.h>
@@ -37,14 +38,19 @@ void write_ladder_red(int value)
 	gpio_port_write(GPIOA, state);
 }
 
-char buf[256];
-char USB_Commands[16][64] = {0};
+uint8_t buf[256];
+uint8_t USB_Commands[16][USB_Command_max_length] = {0};
 
 int main(void)
 {
 
 	hardware_initalization();
+	delay_ms(1000);
+	tca9554_init();
+
 	tca9554_led_write(E0, 1);
+	tca9554_led_write(E1, 2);
+	tca9554_led_write(E2, 1);
 
 	write_ladder_red(0);
 	gpio_clear(GPIOB, GPIO0 | GPIO1 | GPIO10 | GPIO11);
@@ -56,9 +62,6 @@ int main(void)
 		write_ladder_red(1);
 	}
 }
-
-// Usb command handlers
-void USB_command_handler_I2C_write(char *command_array);
 
 void USB_recieve_interrupt()
 {
@@ -73,17 +76,25 @@ void USB_recieve_interrupt()
 		int current_length = 0;
 		while ((current_length + 1) < len)
 		{
+
+			// Uses length to copy commands into their arrays
 			memcpy(&USB_Commands[current_length][0], &buf[current_length], buf[current_length] + 1);
+
+			// moves processed data pointer (current_length) to first byte of new data
 			current_length += buf[current_length];
 		}
 
 		// Execute the commands
 		for (int i = 0; USB_Commands[i][0] != 0; i++)
 		{
-			switch (USB_Commands[i][1])
+			switch (USB_Commands[i][USB_Command_Byte_Command])
 			{
-			case 1: // I2C Write
+			case USB_command_handler_I2C_write_number: // I2C Write
 				USB_command_handler_I2C_write(&USB_Commands[i][0]);
+				break;
+
+			case 2: // I2C send/recieve
+				USB_command_handler_I2C_send_recieve(&USB_Commands[i][0]);
 				break;
 
 			default:
@@ -94,6 +105,8 @@ void USB_recieve_interrupt()
 
 				break;
 			}
+
+			// Reset the command
 		}
 	}
 }
