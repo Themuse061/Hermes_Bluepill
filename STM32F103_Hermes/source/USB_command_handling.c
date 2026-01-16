@@ -18,13 +18,13 @@
  * uint8_t[1] - This Command
  * uint8_t[2] - target address
  * uint8_t[3+] - data
- *	 	length of data is calculated from Packet length - 2
  */
 void USB_command_handler_I2C_write(uint8_t *command_array)
 {
 	uint8_t address = command_array[USB_Command_Byte_Data];
 	uint8_t *data_start = &command_array[USB_Command_Byte_Data + 1];
-	uint8_t data_length = command_array[USB_Command_Byte_Length - 2];
+	uint8_t data_length = command_array[USB_Command_Byte_Length];
+	data_length -= 3;
 
 	i2c_transfer7(I2C1, address, data_start, data_length, 0, 0);
 }
@@ -34,15 +34,13 @@ TCA write
 add reg value
 
 lenght Command data
-04 01 38 01FF -> on
-04 01 38 0100 -> off
+05 01 38 01 FF -> on
+05 01 38 01 00 -> off
 
 Hot plate write
 addr - 0x28
 register - 0x03 l=4 , 0x04 l = 8, 0x05l = 3
-reg 1 -> 07 01 28 03 00aa1177
-reg 2 -> 0b 01 28 000000000000
-reg 3 -> 06 01 28 000000
+reg 1 -> 08 01 28 03 00 FF aa 0c
 
 */
 
@@ -60,6 +58,10 @@ reg 3 -> 06 01 28 000000
  *
  * first writes, then sends
  */
+// 05 02 28 01 04 03 - read dummy1
+// 05 02 28 01 08 04 - read dummy2
+// 05 02 28 01 03 05 - read dummy3
+
 void USB_command_handler_I2C_send_recieve(uint8_t *command_array)
 {
 	uint8_t address = command_array[2];

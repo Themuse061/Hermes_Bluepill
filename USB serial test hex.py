@@ -21,7 +21,7 @@ def read_from_port(ser):
                 # Attempt to decode as UTF-8 for display, replace errors with ?
                 # If you want to see incoming data as HEX, change this line.
                 hex_data = data.hex(' ')
-                print(hex_data)
+                print(f"MCU -> {hex_data}")
                 sys.stdout.flush()
             time.sleep(0.01)
         except serial.SerialException:
@@ -61,6 +61,7 @@ def main():
 
                     # Send raw bytes (no \n added)
                     ser.write(data_to_send)
+                    print(f"-> MCU {data_to_send.hex(' ')}")
 
                     # Optional: Print what was sent for confirmation (comment out if not needed)
                     # print(f" -> Sent {len(data_to_send)} bytes: {data_to_send}")
