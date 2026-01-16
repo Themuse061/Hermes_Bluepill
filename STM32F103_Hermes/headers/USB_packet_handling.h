@@ -12,6 +12,12 @@ void USB_command_handler_I2C_write(uint8_t *command_array);
 #define USB_command_handler_I2C_send_recieve_number 0x02
 void USB_command_handler_I2C_send_recieve(uint8_t *command_array);
 
+#define USB_command_handler_echo_number 0x03
+void USB_command_handler_echo(uint8_t *command_array);
+
+#define USB_command_handler_ping_number 0x04
+void USB_command_handler_ping(uint8_t *command_array);
+
 #define USB_command_PC_short_data_return 0xFF
 
 /*

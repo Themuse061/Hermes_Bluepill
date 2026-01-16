@@ -20,9 +20,8 @@ def read_from_port(ser):
 
                 # Attempt to decode as UTF-8 for display, replace errors with ?
                 # If you want to see incoming data as HEX, change this line.
-                text_data = data.decode('utf-8', errors='replace')
-
-                sys.stdout.write(text_data)
+                hex_data = data.hex(' ')
+                print(hex_data)
                 sys.stdout.flush()
             time.sleep(0.01)
         except serial.SerialException:

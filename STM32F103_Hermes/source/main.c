@@ -85,16 +85,24 @@ void USB_recieve_interrupt()
 		}
 
 		// Execute the commands
-		for (int i = 0; USB_Commands[i][0] != 0; i++)
+		for (int i = 0; USB_Commands[i][USB_Command_Byte_Length] != 0; i++)
 		{
 			switch (USB_Commands[i][USB_Command_Byte_Command])
 			{
-			case USB_command_handler_I2C_write_number: // I2C Write
+			case USB_command_handler_I2C_write_number:
 				USB_command_handler_I2C_write(&USB_Commands[i][0]);
 				break;
 
-			case 2: // I2C send/recieve
+			case USB_command_handler_I2C_send_recieve_number:
 				USB_command_handler_I2C_send_recieve(&USB_Commands[i][0]);
+				break;
+
+			case USB_command_handler_echo_number:
+				USB_command_handler_echo(&USB_Commands[i][0]);
+				break;
+
+			case USB_command_handler_ping_number:
+				USB_command_handler_ping(&USB_Commands[i][0]);
 				break;
 
 			default:
@@ -107,6 +115,7 @@ void USB_recieve_interrupt()
 			}
 
 			// Reset the command
+			USB_Commands[i][USB_Command_Byte_Length] = 0;
 		}
 	}
 }

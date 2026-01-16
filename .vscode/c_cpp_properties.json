@@ -4,7 +4,8 @@
             "name": "Win32",
             "includePath": [
                 "${workspaceFolder}/**",
-                "${workspaceFolder}/../_Cerys_Modules/libopencm3/include"
+                "${workspaceFolder}/../_Cerys_Modules/libopencm3/include",
+                "${workspaceFolder}/../_Cerys_Modules/ch32fun/ch32fun"
             ],
             "defines": [
                 "_DEBUG",

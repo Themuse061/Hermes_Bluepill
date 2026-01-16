@@ -34,8 +34,15 @@ TCA write
 add reg value
 
 lenght Command data
-04013801FF -> on
-0401380100 -> off
+04 01 38 01FF -> on
+04 01 38 0100 -> off
+
+Hot plate write
+addr - 0x28
+register - 0x03 l=4 , 0x04 l = 8, 0x05l = 3
+reg 1 -> 07 01 28 03 00aa1177
+reg 2 -> 0b 01 28 000000000000
+reg 3 -> 06 01 28 000000
 
 */
 
@@ -73,6 +80,36 @@ void USB_command_handler_I2C_send_recieve(uint8_t *command_array)
 	memcpy(&USB_send_buffer[4], &read_data[0], read_length);
 
 	USB_send_data(USB_send_buffer, (uint16_t)USB_send_buffer[0]);
+}
+
+/**
+ * COMMAND 0x03 USB_command_handler_echo
+ *
+ * Echoes the received packet back to the host.
+ * FORMAT
+ * uint8_t[0] - Packet Length
+ * uint8_t[1] - This Command
+ * uint8_t[2+] - Data to echo
+ */
+void USB_command_handler_echo(uint8_t *command_array)
+{
+	USB_send_data(command_array, command_array[0]);
+}
+
+/**
+ * COMMAND 0x04 USB_command_handler_ping
+ *
+ * Returns a fixed ping response
+ * FORMAT
+ * uint8_t[0] - Packet Length (9)
+ * uint8_t[1] - This Command (0x04)
+ * uint8_t[2+] - Fixed data: 0xFFaa001100aaFF
+ */
+void USB_command_handler_ping(uint8_t *command_array)
+{
+	(void)command_array;
+	uint8_t ping_data[] = {0x09, 0x04, 0xFF, 0xaa, 0x00, 0x11, 0x00, 0xaa, 0xFF};
+	USB_send_data(ping_data, 9);
 }
 
 /*
