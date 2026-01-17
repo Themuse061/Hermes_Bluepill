@@ -1,58 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "usb_serial.h"
+#include "USB_commands.h"
 
 // Configuration
 const char *COM_PORT = "COM14";
 const int BAUD_RATE = 115200;
-
-/**
- * Sends raw bytes to the MCU with logging
- */
-void app_log_and_send(unsigned char *input_data, int length)
-{
-	printf("Sending: ");
-	for (int i = 0; i < length; i++)
-		printf("%02X ", input_data[i]);
-	printf("\n");
-
-	// Use new abstraction
-	int sent = USB_write(input_data, length);
-
-	if (sent != length)
-	{
-		printf("Error: Sent %d of %d bytes.\n", sent, length);
-	}
-}
-
-/**
- * Waits for and prints the MCU response
- */
-void USB_read_and_display()
-{
-	unsigned char buffer[512];
-
-	// Wait for up to 500ms for a response
-	int bytes_read = USB_read(buffer, sizeof(buffer), 500);
-
-	if (bytes_read > 0)
-	{
-		printf("MCU Response: ");
-		for (int i = 0; i < bytes_read; i++)
-		{
-			printf("%02X ", buffer[i]);
-		}
-		printf("\n");
-	}
-	else if (bytes_read == 0) // Note: USB_read (sp_blocking_read) might return 0 on timeout depending on lib version, or error
-	{
-		printf("MCU Response: (Timeout/No data)\n");
-	}
-	else
-	{
-		printf("MCU Response: (Error reading port)\n");
-	}
-}
 
 int main()
 {
@@ -62,14 +15,31 @@ int main()
 		return 1;
 	}
 
-	// 2. Define the data to send: 0x04 0x04
-	unsigned char cmd[] = {0x04, 0x04};
+	printf("--- Starting USB Command Test ---\n");
 
-	// 3. Perform Transaction
-	app_log_and_send(cmd, sizeof(cmd));
-	USB_read_and_display();
+	// 2. Ping
+	USB_command_ping();
 
-	// 4. Cleanup
+	// 3. Echo
+	uint8_t echo_data[] = {0xDE, 0xAD, 0xBE, 0xEF};
+	USB_command_echo(echo_data, sizeof(echo_data));
+
+	// 4. I2C Write 1: 0x01 0x00 to 0x38
+	uint8_t i2c_data1[] = {0x01, 0x00};
+	USB_command_i2c_write(0x38, i2c_data1, sizeof(i2c_data1));
+
+	// 5. Delay 1s
+	printf("... Delaying 1s ...\n");
+	// Using USB_wait_for_data with 1000ms timeout acts as a sleep if no data arrives
+	USB_wait_for_data(1000);
+
+	// 6. I2C Write 2: 0x01 0xFF to 0x38
+	uint8_t i2c_data2[] = {0x01, 0xFF};
+	USB_command_i2c_write(0x38, i2c_data2, sizeof(i2c_data2));
+
+	printf("--- Test Complete ---\n");
+
+	// 7. Cleanup
 	USB_deinit();
 
 	return 0;
