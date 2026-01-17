@@ -1,37 +1,23 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <libserialport.h>
+#include "usb_serial.h"
 
 // Configuration
 const char *COM_PORT = "COM14";
 const int BAUD_RATE = 115200;
 
-struct sp_port *port;
-
 /**
- * Helper: Check libserialport return codes
+ * Sends raw bytes to the MCU with logging
  */
-void check_sp(enum sp_return result, const char *msg)
-{
-	if (result < 0)
-	{
-		fprintf(stderr, "Error: %s\n", msg);
-		exit(1);
-	}
-}
-
-/**
- * Sends raw bytes to the MCU
- */
-void USB_write(unsigned char *input_data, int length)
+void app_log_and_send(unsigned char *input_data, int length)
 {
 	printf("Sending: ");
 	for (int i = 0; i < length; i++)
 		printf("%02X ", input_data[i]);
 	printf("\n");
 
-	// Blocking write with 1000ms timeout
-	int sent = sp_blocking_write(port, input_data, length, 1000);
+	// Use new abstraction
+	int sent = USB_write(input_data, length);
 
 	if (sent != length)
 	{
@@ -47,8 +33,7 @@ void USB_read_and_display()
 	unsigned char buffer[512];
 
 	// Wait for up to 500ms for a response
-	// sp_blocking_read returns the number of bytes read
-	int bytes_read = sp_blocking_read(port, buffer, sizeof(buffer), 500);
+	int bytes_read = USB_read(buffer, sizeof(buffer), 500);
 
 	if (bytes_read > 0)
 	{
@@ -59,7 +44,7 @@ void USB_read_and_display()
 		}
 		printf("\n");
 	}
-	else if (bytes_read == 0)
+	else if (bytes_read == 0) // Note: USB_read (sp_blocking_read) might return 0 on timeout depending on lib version, or error
 	{
 		printf("MCU Response: (Timeout/No data)\n");
 	}
@@ -72,25 +57,20 @@ void USB_read_and_display()
 int main()
 {
 	// 1. Setup Port
-	check_sp(sp_get_port_by_name(COM_PORT, &port), "Finding port");
-	check_sp(sp_open(port, SP_MODE_READ_WRITE), "Opening port");
+	if (USB_init(COM_PORT, BAUD_RATE) < 0) {
+		fprintf(stderr, "Error: Failed to open port %s\n", COM_PORT);
+		return 1;
+	}
 
-	// 2. Configure Port
-	sp_set_baudrate(port, BAUD_RATE);
-	sp_set_bits(port, 8);
-	sp_set_parity(port, SP_PARITY_NONE);
-	sp_set_stopbits(port, 1);
-
-	// 3. Define the data to send: 0x04 0x04
+	// 2. Define the data to send: 0x04 0x04
 	unsigned char cmd[] = {0x04, 0x04};
 
-	// 4. Perform Transaction
-	USB_write(cmd, sizeof(cmd));
+	// 3. Perform Transaction
+	app_log_and_send(cmd, sizeof(cmd));
 	USB_read_and_display();
 
-	// 5. Cleanup
-	sp_close(port);
-	sp_free_port(port);
+	// 4. Cleanup
+	USB_deinit();
 
 	return 0;
 }
