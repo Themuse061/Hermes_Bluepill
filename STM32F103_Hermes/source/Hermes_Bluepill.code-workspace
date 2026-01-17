@@ -1,0 +1,28 @@
+{
+	"folders": [
+		{
+			"path": "../.."
+		},
+		{
+			"name": "Dark_times",
+			"path": "../../dark_times"
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"gpio.h": "c",
+			"stdint.h": "c",
+			"main.h": "c",
+			"rcc.h": "c",
+			"systick.h": "c",
+			"cortex.h": "c",
+			"interrupt_handlers": "c",
+			"timer.h": "c",
+			"compare": "c",
+			"i2c.h": "c",
+			"i2c_common_v1.h": "c",
+			"adc.h": "c"
+		},
+		"cortex-debug.variableUseNaturalFormat": true
+	}
+}
