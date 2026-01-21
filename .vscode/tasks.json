@@ -2,58 +2,6 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "all build",
-            "type": "shell",
-            "command": "cd ./STM32F103_Hermes ; make ; cd ../dark_times ; make ",
-            "args": [],
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            },
-            "problemMatcher": [
-                "$gcc"
-            ]
-        },
-        {
-            "label": "all upload",
-            "type": "shell",
-            "command": "cd ./STM32F103_Hermes ; make upload ; cd ../dark_times ; make upload ",
-            "args": [],
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            },
-            "problemMatcher": [
-                "$gcc"
-            ]
-        },
-        {
-            "label": "all clean",
-            "type": "shell",
-            "command": "cd ./STM32F103_Hermes ; make clean ; cd ../dark_times ; make clean",
-            "args": [],
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            },
-            "problemMatcher": [
-                "$gcc"
-            ]
-        },
-        {
-            "label": "STM32F103 build ",
-            "type": "shell",
-            "command": "cd ./STM32F103_Hermes ; make",
-            "args": [],
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            },
-            "problemMatcher": [
-                "$gcc"
-            ]
-        },
-        {
             "label": "STM32F103 upload ",
             "type": "shell",
             "command": "cd ./STM32F103_Hermes ; make upload",
@@ -70,45 +18,6 @@
             "label": "STM32F103 clean ",
             "type": "shell",
             "command": "cd ./STM32F103_Hermes ; make clean",
-            "args": [],
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            },
-            "problemMatcher": [
-                "$gcc"
-            ]
-        },
-        {
-            "label": "CH32v003 build",
-            "type": "shell",
-            "command": "cd ./dark_times ; make ",
-            "args": [],
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            },
-            "problemMatcher": [
-                "$gcc"
-            ]
-        },
-        {
-            "label": "CH32v003 upload",
-            "type": "shell",
-            "command": "cd ./dark_times ; make upload",
-            "args": [],
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            },
-            "problemMatcher": [
-                "$gcc"
-            ]
-        },
-        {
-            "label": "CH32v003 clean",
-            "type": "shell",
-            "command": "cd ./dark_times ; make clean",
             "args": [],
             "group": {
                 "kind": "build",
@@ -141,6 +50,19 @@
                 "-o",
                 "${workspaceFolder}/C_serial_doer_stuffer/C_serial_doer_stuffer.exe"
             ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
+        },
+        {
+            "label": "Upload dark times",
+            "type": "shell",
+            "command": "platformio.exe run -d ${workspaceFolder}/dark_times --target upload --environment genericCH32V003F4P6",
+            "args": [],
             "group": {
                 "kind": "build",
                 "isDefault": true
