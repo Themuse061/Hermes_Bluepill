@@ -39,19 +39,25 @@ int main()
 	USB_command_i2c_write(0x38, i2c_data2, sizeof(i2c_data2));
 
 	//  I2C Write TO ch32 2: 0x01 0xFF to 0x38
-	uint8_t i2c_data3[] = {0x00, 0xFF};
+	uint8_t i2c_data3[] = {0x10, 0xFF};
 
-	for (int i = 0; i < 10; i++)
+	for (int i = 0; i < 40; i++)
 	{
 
-		for (int i = 0; i < 8; i++)
+		for (int j = 0; j < 8; j++)
 		{
-			i2c_data3[1] = i;
+			i2c_data3[1] = j;
 			printf("sending new value\n");
 			USB_command_i2c_write(0x09, i2c_data3, sizeof(i2c_data2));
-			USB_wait_for_data(1000);
+			USB_wait_for_data(40 - i);
 		}
 	}
+
+	USB_wait_for_data(3000);
+	printf("reseting mcu...");
+	USB_wait_for_data(3000);
+	i2c_data3[0] = 0x00;
+	USB_command_i2c_write(0x09, i2c_data3, sizeof(i2c_data2));
 
 	printf("--- Test Complete ---\n");
 
