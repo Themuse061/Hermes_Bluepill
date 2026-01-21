@@ -10,7 +10,8 @@ const int BAUD_RATE = 115200;
 int main()
 {
 	// 1. Setup Port
-	if (USB_init(COM_PORT, BAUD_RATE) < 0) {
+	if (USB_init(COM_PORT, BAUD_RATE) < 0)
+	{
 		fprintf(stderr, "Error: Failed to open port %s\n", COM_PORT);
 		return 1;
 	}
@@ -36,6 +37,23 @@ int main()
 	// 6. I2C Write 2: 0x01 0xFF to 0x38
 	uint8_t i2c_data2[] = {0x01, 0xFF};
 	USB_command_i2c_write(0x38, i2c_data2, sizeof(i2c_data2));
+
+	//  I2C Write TO ch32 2: 0x01 0xFF to 0x38
+	uint8_t i2c_data3[] = {0x00, 0xFF};
+
+	//  I2C Write TO ch32 2: 0x01 0xFF to 0x38
+	uint8_t i2c_data4[] = {0x00, 0x00};
+
+	for (int i = 0; i < 10; i++)
+	{
+		printf("sending high\n");
+		USB_command_i2c_write(0x09, i2c_data4, sizeof(i2c_data4));
+		USB_wait_for_data(1000);
+
+		printf("sending low\n");
+		USB_command_i2c_write(0x09, i2c_data3, sizeof(i2c_data3));
+		USB_wait_for_data(1000);
+	}
 
 	printf("--- Test Complete ---\n");
 
