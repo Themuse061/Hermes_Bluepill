@@ -59,6 +59,7 @@ int main()
 {
     SystemInit();
     funGpioInitAll();
+    __enable_irq();
 
     // Initialize I2C slave
     funPinMode(PC1, GPIO_CFGLR_OUT_10Mhz_AF_OD); // SDA

@@ -2,11 +2,12 @@
 #define COMMANDS_MK
 
 // I2C Slave Commands
-#define I2C_Slave_Command_Reset_MCU             0x00 // (universal)
-#define I2C_Slave_Command_Jump_To_Bootloader    0x01 // (universal)
-#define I2C_Slave_Command_Write_Flash           0x02 // (universal)
-#define I2C_Slave_Command_Read_Flash            0x03 // (universal)
-#define I2C_Slave_Command_Go_To_Flash_Address   0x04 // (universal)
+#define I2C_Slave_Command_Reset_MCU                  0x00 // (universal)
+#define I2C_Slave_Command_Jump_To_Bootloader         0x01 // (universal)
+#define I2C_Slave_Command_Flash_Set_Pointer          0x02 // (universal)
+#define I2C_Slave_Command_Flash_Read_Page            0x03 // (universal)
+#define I2C_Slave_Command_Flash_Write_Page           0x04 // (universal)
+#define I2C_Slave_Command_Flash_Check_For_Error      0x05 // (universal)
 
 #define I2C_Slave_Command_GPIO_Set              0x10 // (dark_times)
 

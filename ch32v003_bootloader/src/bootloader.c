@@ -5,16 +5,12 @@
 // CONFIGURATION
 // ===================================================================================
 #define I2C_ADDR 0x48
-#define APP_START_ADDR 0x08000800 // Where Program B (Main App) lives
+#define APP_START_ADDR 0x00000800
 #define BOOT_FLAG_ADDR ((volatile uint32_t *)0x200007FC)
 #define BOOT_MAGIC_VALUE 0xBEEFCAFE
 
-// Command to trigger bootloader mode during the 500ms window
-#define I2C_Slave_Command_Reset_MCU 0x00           // (universal)
-#define I2C_Slave_Command_Jump_To_Bootloader 0x01  // (universal)
-#define I2C_Slave_Command_Write_Flash 0x02         // (universal)
-#define I2C_Slave_Command_Read_Flash 0x03          // (universal)
-#define I2C_Slave_Command_Go_To_Flash_Address 0x04 // (universal)
+#define I2C_Slave_Command_Reset_MCU 0x00
+#define I2C_Slave_Command_Jump_To_Bootloader 0x01
 
 volatile uint8_t i2c_buffer[64];
 
@@ -23,25 +19,15 @@ volatile uint8_t i2c_buffer[64];
 // ===================================================================================
 void JumpToApp(void)
 {
-    // 1. Disable Interrupts (Safety)
     __disable_irq();
-
-    // 2. De-Init I2C (Important!)
-    // We turn off the I2C peripheral so the Main App finds it in a clean reset state.
-    // If we don't do this, the Main App's I2C init might fail or glitch.
-    RCC->APB1PCENR &= ~(RCC_APB1Periph_I2C1);
-
-    // 3. Relocate Vector Table
-    // Tell the CPU that from now on, interrupts are handled by the Main App code
-    // Mode 1 (Vectored) | Address
+    RCC->APB1PCENR &= ~(RCC_APB1Periph_I2C1); // De-init I2C
     asm volatile("csrw mtvec, %0" : : "r"(APP_START_ADDR | 1));
 
-    // 4. Jump
     void (*app_entry)(void) = (void (*)(void))APP_START_ADDR;
     app_entry();
 
     while (1)
-        ; // Should never reach here
+        ;
 }
 
 // ===================================================================================
@@ -49,25 +35,16 @@ void JumpToApp(void)
 // ===================================================================================
 void onWrite(uint8_t reg, uint8_t length)
 {
-    switch (reg)
+    if (reg == I2C_Slave_Command_Reset_MCU)
     {
-    case I2C_Slave_Command_Reset_MCU:
         NVIC_SystemReset();
         while (1)
-        {
-        }
-        break;
-
-    case I2C_Slave_Command_Jump_To_Bootloader:
-        *BOOT_FLAG_ADDR = BOOT_MAGIC_VALUE;
-        break;
-
-    default:
-        break;
+            ;
     }
-
-    // NOTE: If you are inside the "Bootloader Loop" later,
-    // you would add handling here for Flash Write/Erase commands.
+    else if (reg == I2C_Slave_Command_Jump_To_Bootloader)
+    {
+        *BOOT_FLAG_ADDR = BOOT_MAGIC_VALUE;
+    }
 }
 
 // ===================================================================================
@@ -78,50 +55,74 @@ int main()
     SystemInit();
     funGpioInitAll();
 
-    // 1. Initialize I2C
+    // 1. FIX: Initialize LED Pin BEFORE writing to it
+    // Using PD6 as debug LED
+    funPinMode(PD6, GPIO_CFGLR_OUT_10Mhz_PP);
+    for (int i = 0; i < 5; i++)
+    {
+        funDigitalWrite(PD6, 1);
+        Delay_Ms(50);
+        funDigitalWrite(PD6, 0);
+        Delay_Ms(50);
+    }
+
+    // 2. Initialize I2C
     funPinMode(PC1, GPIO_CFGLR_OUT_10Mhz_AF_OD); // SDA
     funPinMode(PC2, GPIO_CFGLR_OUT_10Mhz_AF_OD); // SCL
     SetupI2CSlave(I2C_ADDR, i2c_buffer, sizeof(i2c_buffer), onWrite, NULL, false);
 
-    // 2. Reset the Flag
-    // We clear it to ensure we only stay if we receive a *fresh* command
-    // or if the Main App specifically reset us with the intention to update.
-    // (If you want to support "Soft Reset from App", remove this line or check it before clearing)
-    *BOOT_FLAG_ADDR = 0;
+    // 3. LOGIC FIX: Check if we came from the App BEFORE clearing the flag
+    bool stay_in_bootloader = false;
 
-    // 3. Wait 500ms (Window of Opportunity)
-    // During this delay, interrupts are active. If Master sends 0x01,
-    // onWrite() will run and set *BOOT_FLAG_ADDR = BOOT_MAGIC_VALUE.
-    Delay_Ms(500);
-
-    // 4. The Decision
+    // A: Did the Main App send us here via Soft Reset?
     if (*BOOT_FLAG_ADDR == BOOT_MAGIC_VALUE)
     {
+        stay_in_bootloader = true;
+    }
+
+    // B: Clear flag now, so if we reset later we don't get stuck
+    *BOOT_FLAG_ADDR = 0;
+
+    // C: Give external Master 500ms to send command 0x01
+    // (Only wait if we aren't already staying)
+    if (!stay_in_bootloader)
+    {
+        Delay_Ms(500);
+
+        // Did I2C command arrive during the delay?
+        if (*BOOT_FLAG_ADDR == BOOT_MAGIC_VALUE)
+        {
+            stay_in_bootloader = true;
+        }
+    }
+
+    // 4. The Decision
+    if (stay_in_bootloader)
+    {
         // --- BOOTLOADER LOOP ---
-        // We received the command! Stay here and wait for firmware updates.
 
-        // Visual confirmation (Optional: Turn on LED on PC4)
-        // Initialize LED
-        funPinMode(PA2, GPIO_CFGLR_OUT_10Mhz_PP); // LED
-        funPinMode(PD6, GPIO_CFGLR_OUT_10Mhz_PP); // LED
-        funPinMode(PC4, GPIO_CFGLR_OUT_10Mhz_PP); // LED
+        // Initialize other LEDs for the show
+        funPinMode(PA2, GPIO_CFGLR_OUT_10Mhz_PP);
+        funPinMode(PC4, GPIO_CFGLR_OUT_10Mhz_PP);
 
-        funDigitalWrite(PC4, 1);
+        // Turn OFF the debug LED to show we finished init
+        funDigitalWrite(PD6, 0);
 
         while (1)
         {
-            // bootloader logic
-            Delay_Ms(1000); // Faster blink to distinguish from bootloader
+            // Blink Pattern: FAST blink = Bootloader Mode
             funDigitalWrite(PA2, 1);
-
-            Delay_Ms(1000);
+            Delay_Ms(100);
             funDigitalWrite(PA2, 0);
+            Delay_Ms(100);
         }
     }
     else
     {
+        // Turn OFF debug LED before jumping
+        funDigitalWrite(PD6, 0);
+
         // --- JUMP TO MAIN APP ---
-        // No command received. Go to Program B.
         JumpToApp();
     }
 }
