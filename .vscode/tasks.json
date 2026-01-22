@@ -28,19 +28,21 @@
             ]
         },
         {
-            "label": "build C",
+            "label": "build C test suite",
             "type": "shell",
             "command": "C:/Users/Muse/AppData/Roaming/xPacks/@xpack-dev-tools/gcc/14.2.0-2.1/.content/bin/gcc.exe",
             "args": [
                 "-g",
                 // 1. Compile all .c files in src
-                "${workspaceFolder}/C_serial_doer_stuffer/src/*.c",
+                "${workspaceFolder}/C_programs/src/*.c",
+                // also include C_test_suite.c
+                "${workspaceFolder}/C_programs/main_files/C_test_suite.c",
                 // 2. Include header files (.h) from include
                 "-I",
-                "${workspaceFolder}/C_serial_doer_stuffer/include",
+                "${workspaceFolder}/C_programs/include",
                 // 3. (NEW) Tell linker to look inside 'src' for library files
                 "-L",
-                "${workspaceFolder}/C_serial_doer_stuffer/src",
+                "${workspaceFolder}/C_programs/src",
                 // 4. (NEW) Link against the DLL.
                 // GCC assumes "lib" prefix and ".dll" suffix.
                 // If your file is "libserialport-0.dll", use "-lserialport-0"
@@ -48,7 +50,7 @@
                 "-lserialport",
                 // 5. Output file
                 "-o",
-                "${workspaceFolder}/C_serial_doer_stuffer/C_serial_doer_stuffer.exe"
+                "${workspaceFolder}/C_programs/compiled/C_test_suite.exe"
             ],
             "group": {
                 "kind": "build",
