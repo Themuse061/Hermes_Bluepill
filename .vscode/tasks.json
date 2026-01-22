@@ -83,6 +83,19 @@
             "problemMatcher": [
                 "$gcc"
             ]
+        },
+        {
+            "label": "flash bootloader blinky test",
+            "type": "shell",
+            "command": "platformio.exe run -d ${workspaceFolder}/ch32v003_bootloader_blinky_test --target upload --environment genericCH32V003F4P6",
+            "args": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
         }
     ]
 }

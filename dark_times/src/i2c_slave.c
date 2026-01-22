@@ -37,6 +37,7 @@ void onWrite(uint8_t reg, uint8_t length)
 		while (1)
 		{
 		}
+		break;
 
 	case I2C_Slave_Command_GPIO_Set:
 		// Master sent: [Addr] [CMD_GPIO] [Bitmask]

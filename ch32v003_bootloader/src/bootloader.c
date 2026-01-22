@@ -51,6 +51,13 @@ void onWrite(uint8_t reg, uint8_t length)
 {
     switch (reg)
     {
+    case I2C_Slave_Command_Reset_MCU:
+        NVIC_SystemReset();
+        while (1)
+        {
+        }
+        break;
+
     case I2C_Slave_Command_Jump_To_Bootloader:
         *BOOT_FLAG_ADDR = BOOT_MAGIC_VALUE;
         break;
@@ -94,14 +101,21 @@ int main()
         // We received the command! Stay here and wait for firmware updates.
 
         // Visual confirmation (Optional: Turn on LED on PC4)
-        funPinMode(PC4, GPIO_CFGLR_OUT_10Mhz_PP);
+        // Initialize LED
+        funPinMode(PA2, GPIO_CFGLR_OUT_10Mhz_PP); // LED
+        funPinMode(PD6, GPIO_CFGLR_OUT_10Mhz_PP); // LED
+        funPinMode(PC4, GPIO_CFGLR_OUT_10Mhz_PP); // LED
+
         funDigitalWrite(PC4, 1);
 
         while (1)
         {
-            // This loop keeps the I2C Slave active.
-            // You can add logic here to process Flash Write flags set by onWrite()
-            // e.g., if(i2c_buffer[66] == 1) Flash_Erase...
+            // bootloader logic
+            Delay_Ms(1000); // Faster blink to distinguish from bootloader
+            funDigitalWrite(PA2, 1);
+
+            Delay_Ms(1000);
+            funDigitalWrite(PA2, 0);
         }
     }
     else
