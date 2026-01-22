@@ -1,32 +1,35 @@
 #include "ch32fun.h"
 #include "i2c_slave.h"
+#include <stdbool.h> // Include for bool type
 
 // ===================================================================================
-// CONFIGURATION
+// CONFIGURATION & DEFINES
 // ===================================================================================
-
 #define I2C_ADDR 0x48
-#define I2C_BUFFER_SIZE 255
-volatile uint8_t i2c_buffer[I2C_BUFFER_SIZE];
 
-#define I2C_Slave_Command_Reset_MCU 0x00             // (universal)
-#define I2C_Slave_Command_Jump_To_Bootloader 0x01    // (universal)
-#define I2C_Slave_Command_Flash_Set_Pointer 0x02     // (universal)
-#define I2C_Slave_Command_Flash_Read_Page 0x03       // (universal)
-#define I2C_Slave_Command_Flash_Write_Page 0x04      // (universal)
-#define I2C_Slave_Command_Flash_Check_For_Error 0x05 // (universal)
+// Protocol Commands
+#define I2C_Slave_Command_Reset_MCU 0x00
+#define I2C_Slave_Command_Jump_To_Bootloader 0x01
+#define I2C_Slave_Command_Flash_Set_Pointer 0x02
+#define I2C_Slave_Command_Flash_Read_Page 0x03
+#define I2C_Slave_Command_Flash_Write_Page 0x04
+#define I2C_Slave_Command_Flash_Check_For_Error 0x05
 
+// Memory Map
 #define APP_START_ADDR 0x00000800
+#define PAGE_SIZE 64
+#define BUFFER_SIZE 255
 #define BOOT_FLAG_ADDR ((volatile uint32_t *)0x200007FC)
 #define BOOT_MAGIC_VALUE 0xBEEFCAFE
 
-#define PAGE_SIZE 64
-uint8_t last_error = 0;
+// Globals
+volatile uint8_t i2c_buffer[BUFFER_SIZE];
 volatile uint32_t flash_pointer = APP_START_ADDR;
 volatile uint8_t need_to_write = 0;
+volatile uint8_t last_error = 0;
 
 // ===================================================================================
-// FLASH PRIMITIVES
+// LOW LEVEL HELPERS (Flash & Jump)
 // ===================================================================================
 void Flash_Unlock()
 {
@@ -65,155 +68,139 @@ void Flash_ProgramPage(uint32_t addr, uint8_t *data)
     Flash_Lock();
 }
 
-// ===================================================================================
-// HELPER: Jump to Program B
-// ===================================================================================
 void JumpToApp(void)
 {
     __disable_irq();
-    RCC->APB1PCENR &= ~(RCC_APB1Periph_I2C1); // De-init I2C
+    RCC->APB1PCENR &= ~(RCC_APB1Periph_I2C1);
     asm volatile("csrw mtvec, %0" : : "r"(APP_START_ADDR | 1));
-
     void (*app_entry)(void) = (void (*)(void))APP_START_ADDR;
     app_entry();
-
     while (1)
         ;
 }
 
 // ===================================================================================
-// I2C CALLBACK
+// I2C CALLBACKS
 // ===================================================================================
 void onWrite(uint8_t reg, uint8_t length)
 {
-
-    // 'reg' is the Command ID (the first byte sent)
-    // The payload data has already been written to i2c_registers[reg], [reg+1], etc.
-
     switch (reg)
     {
     case I2C_Slave_Command_Reset_MCU:
-        *BOOT_FLAG_ADDR = 0; // Clear flag
+        *BOOT_FLAG_ADDR = 0;
         NVIC_SystemReset();
         while (1)
             ;
         break;
-
     case I2C_Slave_Command_Jump_To_Bootloader:
-        *BOOT_FLAG_ADDR = BOOT_MAGIC_VALUE; // Set flag
+        *BOOT_FLAG_ADDR = BOOT_MAGIC_VALUE; /* Wait for Main Loop Logic */
         break;
-
     case I2C_Slave_Command_Flash_Set_Pointer:
-        // Packet: [0x02] [AddrLo] [AddrHi]
-        // Data is at i2c_registers[2] and [3]
-        {
-            uint16_t offset = i2c_registers[reg] | (i2c_registers[reg + 1] << 8);
-            flash_pointer = 0x08000000 + offset;
-        }
+        flash_pointer = 0x08000000 + (i2c_buffer[reg] | (i2c_buffer[reg + 1] << 8));
         break;
-
     case I2C_Slave_Command_Flash_Read_Page:
-        // Packet: [0x03] (Master writes this to set the index)
-        // PREPARE BUFFER: Load 64 bytes from Flash into RAM immediately
-        // so it is ready when the Master sends the RESTART+READ signal.
-        {
-            uint8_t *flash_src = (uint8_t *)flash_pointer;
-            for (int i = 0; i < PAGE_SIZE; i++)
-            {
-                // We load data into the buffer starting at index 0x03
-                i2c_registers[reg + i] = flash_src[i];
-            }
-        }
-        break;
-
+    {
+        uint8_t *src = (uint8_t *)flash_pointer;
+        for (int i = 0; i < PAGE_SIZE; i++)
+            i2c_buffer[reg + i] = src[i];
+    }
+    break;
     case I2C_Slave_Command_Flash_Write_Page:
-        // Packet: [0x04] [64 Bytes Data] [Checksum]
-        // We cannot write Flash in an interrupt. Set flag for Main Loop.
         need_to_write = 1;
         break;
-
     case I2C_Slave_Command_Flash_Check_For_Error:
-        // Usually read-only, but if Master writes here, we can clear errors.
         last_error = 0;
-        break;
-
-    default:
         break;
     }
 }
 
 void onRead(uint8_t reg)
 {
-    switch (reg)
-    {
-    case I2C_Slave_Command_Flash_Check_For_Error:
-        // Just-in-time update: Ensure register holds the latest error state
-        i2c_registers[reg] = last_error;
-        break;
-
-    case I2C_Slave_Command_Flash_Read_Page:
-        // Optional: You could load data here byte-by-byte,
-        // but pre-loading in onWrite is usually safer for timing.
-        break;
-
-    default:
-        break;
-    }
+    if (reg == I2C_Slave_Command_Flash_Check_For_Error)
+        i2c_buffer[reg] = last_error;
 }
+
 // ===================================================================================
-// Bootloader Checking loop
+// MODULAR FUNCTIONS
 // ===================================================================================
 
-int check_for_bootloader_with_wait()
+bool check_for_bootloader_with_wait()
 {
-    bool stay_in_bootloader = false;
+    bool stay = false;
 
     // A: Did the Main App send us here via Soft Reset?
     if (*BOOT_FLAG_ADDR == BOOT_MAGIC_VALUE)
     {
-        stay_in_bootloader = true;
+        stay = true;
     }
 
-    // B: Clear flag now, so if we reset later we don't get stuck
+    // B: Clear flag now.
+    // If we return 'true', we stay in loop. If 'false', we jump.
+    // Clearing it ensures next hard reset goes to App.
     *BOOT_FLAG_ADDR = 0;
 
-    // C: Give external Master 500ms to send command 0x01
-    // (Only wait if we aren't already staying)
-    if (!stay_in_bootloader)
+    // C: Wait Window (Only if not already staying)
+    if (!stay)
     {
         Delay_Ms(500);
 
         // Did I2C command arrive during the delay?
+        // (onWrite sets this flag even during Delay_Ms)
         if (*BOOT_FLAG_ADDR == BOOT_MAGIC_VALUE)
         {
-            stay_in_bootloader = true;
+            stay = true;
         }
     }
 
-    return stay_in_bootloader;
+    return stay;
 }
-
-// ===================================================================================
-// The Bootloader
-// ===================================================================================
 
 void TheBootloaderLoop()
 {
-    // --- BOOTLOADER LOOP ---
-
-    // Initialize other LEDs for the show
+    // Visual Indication: Ready for commands
     funPinMode(PA2, GPIO_CFGLR_OUT_10Mhz_PP);
-    funPinMode(PC4, GPIO_CFGLR_OUT_10Mhz_PP);
-
-    // Turn OFF the debug LED to show we finished init
-    funDigitalWrite(PD6, 0);
+    funDigitalWrite(PA2, 1);
 
     while (1)
     {
-        // Blink Pattern: FAST blink = Bootloader Mode
-        funDigitalWrite(PA2, 1);
-        Delay_Ms(100);
-        funDigitalWrite(PA2, 0);
+        // 1. Handle Flash Writing
+        if (need_to_write)
+        {
+            need_to_write = 0;
+
+            // Get Pointers
+            uint8_t *data_ptr = (uint8_t *)&i2c_buffer[I2C_Slave_Command_Flash_Write_Page];
+            uint8_t recv_sum = i2c_buffer[I2C_Slave_Command_Flash_Write_Page + PAGE_SIZE];
+
+            // Calculate Checksum
+            uint8_t calc_sum = 0;
+            for (int i = 0; i < PAGE_SIZE; i++)
+                calc_sum += data_ptr[i];
+
+            if (calc_sum == recv_sum)
+            {
+                if (flash_pointer >= APP_START_ADDR)
+                {
+                    funDigitalWrite(PA2, 0); // Blink OFF during write
+                    Flash_ErasePage(flash_pointer);
+                    Flash_ProgramPage(flash_pointer, data_ptr);
+                    flash_pointer += PAGE_SIZE;
+                    last_error = 0;
+                    funDigitalWrite(PA2, 1); // Blink ON after write
+                }
+                else
+                {
+                    last_error = 2;
+                } // Protected
+            }
+            else
+            {
+                last_error = 1;
+            } // Bad Checksum
+        }
+
+        // 2. Check if Master ordered a Reset via 0x00 command
+        // (Handled implicitly by ISR reset, but good to know loop is active)
     }
 }
 
@@ -225,8 +212,7 @@ int main()
     SystemInit();
     funGpioInitAll();
 
-    // 1. FIX: Initialize LED Pin BEFORE writing to it
-    // Using PD6 as debug LED
+    // 1. Sanity Check Blink (PD6)
     funPinMode(PD6, GPIO_CFGLR_OUT_10Mhz_PP);
     for (int i = 0; i < 5; i++)
     {
@@ -241,8 +227,8 @@ int main()
     funPinMode(PC2, GPIO_CFGLR_OUT_10Mhz_AF_OD); // SCL
     SetupI2CSlave(I2C_ADDR, i2c_buffer, sizeof(i2c_buffer), onWrite, onRead, false);
 
-    // 4. The Decision
-    if (check_for_bootloader_with_wait)
+    // 3. The Decision
+    if (check_for_bootloader_with_wait())
     {
         TheBootloaderLoop();
     }
