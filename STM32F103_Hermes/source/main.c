@@ -105,6 +105,10 @@ void USB_recieve_interrupt()
 				USB_command_handler_ping(&USB_Commands[i][0]);
 				break;
 
+			case USB_Device_Command_Delay_Ms:
+				USB_command_handler_delay_ms(&USB_Commands[i][0]);
+				break;
+
 			default:
 				while (1)
 				{

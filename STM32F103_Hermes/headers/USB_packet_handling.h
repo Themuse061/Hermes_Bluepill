@@ -18,6 +18,9 @@ void USB_command_handler_echo(uint8_t *command_array);
 #define USB_Device_Command_Ping 0x04
 void USB_command_handler_ping(uint8_t *command_array);
 
+#define USB_Device_Command_Delay_Ms 0x05
+void USB_command_handler_delay_ms(uint8_t *command_array);
+
 #define USB_Device_Command_PC_Short_Data_Return 0xFF
 
 /*

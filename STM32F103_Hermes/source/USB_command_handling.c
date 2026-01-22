@@ -114,6 +114,22 @@ void USB_command_handler_ping(uint8_t *command_array)
 	USB_send_data(ping_data, 9);
 }
 
+/**
+ * COMMAND 0x05 USB_command_handler_delay_ms
+ *
+ * Delays for a specified amount of time
+ * FORMAT
+ * uint8_t[0] - Packet Length
+ * uint8_t[1] - This Command
+ * uint8_t[2] - Delay time in ms (low byte)
+ * uint8_t[3] - Delay time in ms (high byte)
+ */
+void USB_command_handler_delay_ms(uint8_t *command_array)
+{
+	uint16_t delay_time = command_array[2] | (command_array[3] << 8);
+	delay_ms(delay_time);
+}
+
 /*
 ========================================== uC -> PC COMMANDS ==========================================
 */

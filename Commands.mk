@@ -15,7 +15,7 @@
 #define USB_Device_Command_I2C_Send_Receive     0x02
 #define USB_Device_Command_Echo                 0x03
 #define USB_Device_Command_Ping                 0x04
-// #define USB_Device_Command_Delay_Ms          0x05 // (NOT IMPLEMENTED)
+#define USB_Device_Command_Delay_Ms          0x05
 
 #define USB_Device_Command_PC_Short_Data_Return 0xFF
 
