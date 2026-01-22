@@ -44,8 +44,9 @@ void USB_command_i2c_write(uint8_t address, const uint8_t *data, uint8_t len);
  * @param write_data Pointer to the data to write.
  * @param write_len Length of the data to write.
  * @param read_len Number of bytes to read back.
+ * @param read_buffer Pointer to a buffer where the read data will be stored. Must be at least read_len bytes.
  */
-void USB_command_i2c_send_receive(uint8_t address, const uint8_t *write_data, uint8_t write_len, uint8_t read_len);
+void USB_command_i2c_send_receive(uint8_t address, const uint8_t *write_data, uint8_t write_len, uint8_t read_len, uint8_t *read_buffer);
 
 /**
  * @brief Sends a Delay command (0x05) to the MCU.

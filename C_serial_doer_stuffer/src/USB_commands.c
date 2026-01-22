@@ -120,7 +120,7 @@ void USB_command_i2c_write(uint8_t address, const uint8_t *data, uint8_t len)
     free(packet);
 }
 
-void USB_command_i2c_send_receive(uint8_t address, const uint8_t *write_data, uint8_t write_len, uint8_t read_len)
+void USB_command_i2c_send_receive(uint8_t address, const uint8_t *write_data, uint8_t write_len, uint8_t read_len, uint8_t *read_buffer)
 {
     // Packet: [Length, Command, Address, WriteLength, ReadLength, WriteData...]
     // Length = 5 + write_len
@@ -143,8 +143,51 @@ void USB_command_i2c_send_receive(uint8_t address, const uint8_t *write_data, ui
     log_packet("I2C_send_receive", packet, packet_len);
     USB_write(packet, packet_len);
 
-    // Expect response
-    USB_read_and_display();
+    // Expect response:
+    // uint8_t[0] - Packet Length
+    // uint8_t[1] - USB_Device_Command_PC_Short_Data_Return (0xFF)
+    // uint8_t[2] - USB_Device_Command_I2C_Send_Receive (0x02)
+    // uint8_t[3] - Address
+    // uint8_t[4+] - returned data
+
+    unsigned char buffer[256];
+    int bytes_read = USB_read(buffer, sizeof(buffer), 500); // 500ms timeout
+
+    if (bytes_read > 0)
+    {
+        // Simple validation
+        if (buffer[1] == USB_Device_Command_PC_Short_Data_Return && buffer[2] == USB_Device_Command_I2C_Send_Receive)
+        {
+             // Copy data to user buffer
+             // Data starts at index 4
+             int data_len_in_packet = bytes_read - 4;
+             if (data_len_in_packet >= read_len) {
+                 memcpy(read_buffer, &buffer[4], read_len);
+             } else {
+                 fprintf(stderr, "Warning: Received less data than expected. Req: %d, Rec: %d\n", read_len, data_len_in_packet);
+                 if (data_len_in_packet > 0) {
+                    memcpy(read_buffer, &buffer[4], data_len_in_packet);
+                 }
+             }
+        }
+        else
+        {
+             printf("MCU Response (Unexpected):");
+             for (int i = 0; i < bytes_read; i++)
+             {
+                 printf(" %02X", buffer[i]);
+             }
+             printf("\n");
+        }
+    }
+    else if (bytes_read == 0)
+    {
+        fprintf(stderr, "Timeout waiting for response in I2C_send_receive\n");
+    }
+    else
+    {
+        fprintf(stderr, "Error reading port in I2C_send_receive\n");
+    }
 
     free(packet);
 }
