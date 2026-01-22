@@ -35,6 +35,13 @@ void USB_command_echo(const uint8_t *data, uint8_t len);
 void USB_command_i2c_write(uint8_t address, const uint8_t *data, uint8_t len);
 
 /**
+ * @brief Sends a Delay command (0x05) to the MCU.
+ *
+ * @param delay Delay in milliseconds (uint32_t).
+ */
+void USB_command_delay(uint32_t delay);
+
+/**
  * @brief Reads pending data from the USB port and displays it (Legacy/Helper).
  * 
  * Used internally to consume and display responses.

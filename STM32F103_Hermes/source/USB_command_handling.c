@@ -121,12 +121,14 @@ void USB_command_handler_ping(uint8_t *command_array)
  * FORMAT
  * uint8_t[0] - Packet Length
  * uint8_t[1] - This Command
- * uint8_t[2] - Delay time in ms (low byte)
- * uint8_t[3] - Delay time in ms (high byte)
+ * uint8_t[2] - Delay time in ms (byte 0)
+ * uint8_t[3] - Delay time in ms (byte 1)
+ * uint8_t[4] - Delay time in ms (byte 2)
+ * uint8_t[5] - Delay time in ms (byte 3)
  */
 void USB_command_handler_delay_ms(uint8_t *command_array)
 {
-	uint16_t delay_time = command_array[2] | (command_array[3] << 8);
+	uint32_t delay_time = command_array[2] | (command_array[3] << 8) | (command_array[4] << 16) | (command_array[5] << 24);
 	delay_ms(delay_time);
 }
 

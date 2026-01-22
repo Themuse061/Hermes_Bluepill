@@ -119,3 +119,21 @@ void USB_command_i2c_write(uint8_t address, const uint8_t *data, uint8_t len)
 
     free(packet);
 }
+
+void USB_command_delay(uint32_t delay)
+{
+    // Packet: [Length, Command, Delay(4 bytes)]
+    // Length = 2 + 4 = 6
+    uint8_t packet_len = 6;
+    uint8_t packet[6];
+
+    packet[0] = packet_len;
+    packet[1] = USB_Device_Command_Delay_Ms;
+    packet[2] = delay & 0xFF;
+    packet[3] = (delay >> 8) & 0xFF;
+    packet[4] = (delay >> 16) & 0xFF;
+    packet[5] = (delay >> 24) & 0xFF;
+
+    log_packet("Delay", packet, packet_len);
+    USB_write(packet, packet_len);
+}
