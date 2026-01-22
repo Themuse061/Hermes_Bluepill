@@ -89,19 +89,19 @@ void USB_recieve_interrupt()
 		{
 			switch (USB_Commands[i][USB_Command_Byte_Command])
 			{
-			case USB_command_handler_I2C_write_number:
+			case USB_Device_Command_I2C_Write:
 				USB_command_handler_I2C_write(&USB_Commands[i][0]);
 				break;
 
-			case USB_command_handler_I2C_send_recieve_number:
+			case USB_Device_Command_I2C_Send_Receive:
 				USB_command_handler_I2C_send_recieve(&USB_Commands[i][0]);
 				break;
 
-			case USB_command_handler_echo_number:
+			case USB_Device_Command_Echo:
 				USB_command_handler_echo(&USB_Commands[i][0]);
 				break;
 
-			case USB_command_handler_ping_number:
+			case USB_Device_Command_Ping:
 				USB_command_handler_ping(&USB_Commands[i][0]);
 				break;
 

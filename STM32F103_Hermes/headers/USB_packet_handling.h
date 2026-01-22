@@ -6,19 +6,19 @@
 #define USB_Command_max_length USB_Command_data_size + 2
 
 // Usb command handlers
-#define USB_command_handler_I2C_write_number 0x01
+#define USB_Device_Command_I2C_Write 0x01
 void USB_command_handler_I2C_write(uint8_t *command_array);
 
-#define USB_command_handler_I2C_send_recieve_number 0x02
+#define USB_Device_Command_I2C_Send_Receive 0x02
 void USB_command_handler_I2C_send_recieve(uint8_t *command_array);
 
-#define USB_command_handler_echo_number 0x03
+#define USB_Device_Command_Echo 0x03
 void USB_command_handler_echo(uint8_t *command_array);
 
-#define USB_command_handler_ping_number 0x04
+#define USB_Device_Command_Ping 0x04
 void USB_command_handler_ping(uint8_t *command_array);
 
-#define USB_command_PC_short_data_return 0xFF
+#define USB_Device_Command_PC_Short_Data_Return 0xFF
 
 /*
 USB Packet format
