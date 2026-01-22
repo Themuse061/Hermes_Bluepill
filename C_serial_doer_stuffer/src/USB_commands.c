@@ -120,6 +120,35 @@ void USB_command_i2c_write(uint8_t address, const uint8_t *data, uint8_t len)
     free(packet);
 }
 
+void USB_command_i2c_send_receive(uint8_t address, const uint8_t *write_data, uint8_t write_len, uint8_t read_len)
+{
+    // Packet: [Length, Command, Address, WriteLength, ReadLength, WriteData...]
+    // Length = 5 + write_len
+    uint8_t packet_len = 5 + write_len;
+    uint8_t *packet = (uint8_t *)malloc(packet_len);
+
+    if (!packet)
+    {
+        fprintf(stderr, "Error: Malloc failed in USB_command_i2c_send_receive\n");
+        return;
+    }
+
+    packet[0] = packet_len;
+    packet[1] = USB_Device_Command_I2C_Send_Receive;
+    packet[2] = address;
+    packet[3] = write_len;
+    packet[4] = read_len;
+    memcpy(&packet[5], write_data, write_len);
+
+    log_packet("I2C_send_receive", packet, packet_len);
+    USB_write(packet, packet_len);
+
+    // Expect response
+    USB_read_and_display();
+
+    free(packet);
+}
+
 void USB_command_delay(uint32_t delay)
 {
     // Packet: [Length, Command, Delay(4 bytes)]
