@@ -74,8 +74,8 @@ int main()
     while (1)
     {
         // Blink logic
-        funDigitalWrite(PA2, 1);
-        funDigitalWrite(PD6, 1);
+        funDigitalWrite(PA2, 0);
+        funDigitalWrite(PD6, 0);
         funDigitalWrite(PC4, 1);
         Delay_Ms(100);
 

@@ -2,6 +2,11 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <USB_commands.h>
+#include <usb_serial.h>
+#include <Command_ID.h>
+#include <bootloader_uploader.h>
+#include <helper.h>
 
 // Platform-specific sleep
 #ifdef _WIN32
@@ -17,32 +22,61 @@
 // ============================================================================
 #define PAGE_SIZE 64
 
-// I2C Slave Commands
-#define I2C_Slave_Command_Reset_MCU 0x00			 // (universal)
-#define I2C_Slave_Command_Jump_To_Bootloader 0x01	 // (universal)
-#define I2C_Slave_Command_Flash_Set_Pointer 0x02	 // (universal)
-#define I2C_Slave_Command_Flash_Read_Page 0x03		 // (universal)
-#define I2C_Slave_Command_Flash_Write_Page 0x04		 // (universal)
-#define I2C_Slave_Command_Flash_Check_For_Error 0x05 // (universal)
-
 // Error Codes (Returned by I2C_Slave_Command_Flash_Check_For_Error)
 #define ERR_OK 0x00
 #define ERR_CSUM 0x01
 #define ERR_ADDR 0x02
 
 // ============================================================================
-// EXTERNAL DEPENDENCIES
+// PROTOTYPES
 // ============================================================================
-
-// Provided by your USB library
-extern void USB_command_i2c_write(uint8_t address, const uint8_t *data, uint8_t len);
-
-// Modified prototype to include the output buffer
-extern void USB_command_i2c_send_receive(uint8_t address, const uint8_t *write_data, uint8_t write_len, uint8_t read_len, uint8_t *read_buffer);
 
 // ============================================================================
 // PRIMITIVE FUNCTIONS
 // ============================================================================
+
+void MCU_Reset(uint8_t i2c_addr)
+{
+	uint8_t cmd = I2C_Slave_Command_Reset_MCU;
+	USB_command_i2c_write(i2c_addr, &cmd, 1);
+}
+
+void MCU_Jump_to_Bootloader(uint8_t i2c_addr)
+{
+	uint8_t bootloader_packet[] = {
+		// reset
+		4,
+		USB_Device_Command_I2C_Write,
+		i2c_addr,
+		I2C_Slave_Command_Reset_MCU,
+		0b00000011,
+
+		// Delay 20ms
+		3,
+		USB_Device_Command_Delay_Ms,
+		20,
+
+		// jumpt to bootloader
+		4,
+		USB_Device_Command_I2C_Write,
+		i2c_addr,
+		I2C_Slave_Command_Jump_To_Bootloader,
+
+		// Delay 20ms
+		3,
+		USB_Device_Command_Delay_Ms,
+		20,
+
+		// jumpt to bootloader
+		4,
+		USB_Device_Command_I2C_Write,
+		i2c_addr,
+		I2C_Slave_Command_Jump_To_Bootloader,
+
+	};
+	USB_write(bootloader_packet, sizeof(bootloader_packet));
+	delay_ms(2000);
+}
 
 /**
  * @brief Sets the internal Flash Write Pointer on the MCU.
@@ -124,12 +158,7 @@ int MCU_Upload_Firmware(uint8_t i2c_addr, const char *filename)
 
 	// 1. Trigger Bootloader Entry
 	printf("[-] Resetting to Bootloader...\n");
-	uint8_t cmd_boot = I2C_Slave_Command_Jump_To_Bootloader;
-	USB_command_i2c_write(i2c_addr, &cmd_boot, 1);
-
-	// Send it twice to ensure we catch the window if logic is finicky
-	SLEEP_MS(50);
-	USB_command_i2c_write(i2c_addr, &cmd_boot, 1);
+	MCU_Jump_to_Bootloader(i2c_addr);
 
 	// Wait for MCU to reboot and enter loop
 	SLEEP_MS(600);
@@ -203,8 +232,7 @@ int MCU_Upload_Firmware(uint8_t i2c_addr, const char *filename)
 
 	// 3. Reset to Application
 	printf("[-] Rebooting to Application...\n");
-	uint8_t cmd_reset = I2C_Slave_Command_Reset_MCU;
-	USB_command_i2c_write(i2c_addr, &cmd_reset, 1);
+	MCU_Reset(i2c_addr);
 
 	return 0; // Success
 }

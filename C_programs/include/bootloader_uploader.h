@@ -36,6 +36,17 @@ void MCU_Flash_Write_Page(uint8_t i2c_addr, const uint8_t *data);
 void MCU_Flash_Read_Page(uint8_t i2c_addr, uint8_t *buffer);
 
 /**
+ * @brief Sends the Reset MCU command (0x00).
+ */
+void MCU_Reset(uint8_t i2c_addr);
+
+/**
+ * @brief Sends the Jump to Bootloader command (0x01).
+ * Includes the specific timing/retry logic to catch the window.
+ */
+void MCU_Jump_to_Bootloader(uint8_t i2c_addr);
+
+/**
  * @brief Flashes a binary file to the MCU via I2C.
  *
  * Sequence:
