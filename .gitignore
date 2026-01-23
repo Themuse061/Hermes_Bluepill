@@ -1,13 +1,4 @@
-STM32F103_Hermes/generated/
-dark_times/generated
 Schematic/Schematic-backups
 Schematic/~Schematic.kicad_sch.lck
-dark_times/.pio
-dark_times/.vscode/.browse.c_cpp.db*
-dark_times/.vscode/c_cpp_properties.json
-dark_times/.vscode/launch.json
-dark_times/.vscode/ipch
-C_programs/C_programs.exe
-C_programs/C_programs.exe
-C_programs/C_test_suite.exe
-C_programs/compiled/C_test_suite.exe
+Software/compiled
+Firmware/STM32F103/STM32F103_Hermes/generated
