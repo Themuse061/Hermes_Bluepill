@@ -40,6 +40,7 @@ void write_ladder_red(int value)
 
 uint8_t buf[256];
 uint8_t USB_Commands[16][USB_Command_max_length] = {0};
+int USB_data_recieved = 0;
 
 int main(void)
 {
@@ -60,6 +61,52 @@ int main(void)
 		write_ladder_red(0);
 		delay_ms(800);
 		write_ladder_red(1);
+		if (USB_data_recieved == 1)
+		{
+
+			// Execute the commands
+			for (int i = 0; i < 16 && USB_Commands[i][USB_Command_Byte_Length] != 0; i++)
+			{
+				switch (USB_Commands[i][USB_Command_Byte_Command])
+				{
+				case USB_Device_Command_I2C_Write:
+					USB_command_handler_I2C_write(&USB_Commands[i][0]);
+					break;
+
+				case USB_Device_Command_I2C_Send_Receive:
+					USB_command_handler_I2C_send_recieve(&USB_Commands[i][0]);
+					break;
+
+				case USB_Device_Command_Echo:
+					USB_command_handler_echo(&USB_Commands[i][0]);
+					break;
+
+				case USB_Device_Command_Ping:
+					USB_command_handler_ping(&USB_Commands[i][0]);
+					break;
+
+				case USB_Device_Command_Delay_Ms:
+					USB_command_handler_delay_ms(&USB_Commands[i][0]);
+					break;
+
+				default:
+					while (1)
+					{
+						// not implemented
+					}
+
+					break;
+				}
+
+				// Reset the command
+				USB_Commands[i][USB_Command_Byte_Length] = 0;
+			}
+			USB_data_recieved = 0;
+		}
+		else if (USB_data_recieved)
+		{
+			// USB data recieve > 1 so there was command overflow
+		}
 	}
 }
 
@@ -71,56 +118,30 @@ void USB_recieve_interrupt()
 
 	if (len) // If any data was read
 	{
+		// reset commands
+		memset(USB_Commands, 0, sizeof(USB_Commands));
 
 		// Put commands into USB_Commands
 		int current_length = 0;
-		while ((current_length + 1) < len)
+		int command_idx = 0;
+		while ((current_length + 1) < len && command_idx < 16)
 		{
+			uint8_t cmd_len = buf[current_length];
 
-			// Uses length to copy commands into their arrays
-			memcpy(&USB_Commands[current_length][0], &buf[current_length], buf[current_length] + 1);
-
-			// moves processed data pointer (current_length) to first byte of new data
-			current_length += buf[current_length];
-		}
-
-		// Execute the commands
-		for (int i = 0; USB_Commands[i][USB_Command_Byte_Length] != 0; i++)
-		{
-			switch (USB_Commands[i][USB_Command_Byte_Command])
+			// Validate length to prevent infinite loops or buffer overreads
+			if (cmd_len == 0 || (current_length + cmd_len) > len)
 			{
-			case USB_Device_Command_I2C_Write:
-				USB_command_handler_I2C_write(&USB_Commands[i][0]);
-				break;
-
-			case USB_Device_Command_I2C_Send_Receive:
-				USB_command_handler_I2C_send_recieve(&USB_Commands[i][0]);
-				break;
-
-			case USB_Device_Command_Echo:
-				USB_command_handler_echo(&USB_Commands[i][0]);
-				break;
-
-			case USB_Device_Command_Ping:
-				USB_command_handler_ping(&USB_Commands[i][0]);
-				break;
-
-			case USB_Device_Command_Delay_Ms:
-				USB_command_handler_delay_ms(&USB_Commands[i][0]);
-				break;
-
-			default:
-				while (1)
-				{
-					// not implemented
-				}
-
 				break;
 			}
 
-			// Reset the command
-			USB_Commands[i][USB_Command_Byte_Length] = 0;
+			// Uses length to copy commands into their arrays
+			memcpy(&USB_Commands[command_idx][0], &buf[current_length], cmd_len);
+
+			// moves processed data pointer (current_length) to first byte of new data
+			current_length += cmd_len;
+			command_idx++;
 		}
+		USB_data_recieved++; // execute the commands in main
 	}
 }
 
