@@ -5,6 +5,7 @@
 #include "USB_commands_high.h"
 #include "Command_ID.h"
 #include "helper.h"
+#include <conio.h>
 
 // Configuration
 const char *COM_PORT = "COM14";
@@ -223,6 +224,9 @@ int main()
 
 	// 7. Cleanup
 	USB_deinit();
+
+	// 8. wait for user input
+	getch();
 
 	return 0;
 }
