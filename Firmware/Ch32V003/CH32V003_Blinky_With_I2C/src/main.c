@@ -10,8 +10,8 @@
 #define I2C_ADDR 0x48
 
 // Commands
-#define I2C_Slave_Command_Reset_MCU 0x00
-#define I2C_Slave_Command_Jump_To_Bootloader 0x01
+#define Command_ID_I2C_Slave_Reset_MCU 0x00
+#define Command_ID_I2C_Slave_Jump_To_Bootloader 0x01
 
 // Magic Flag Location (Must match Bootloader!)
 #define BOOT_FLAG_ADDR ((volatile uint32_t *)0x200007FC)
@@ -27,7 +27,7 @@ void onWrite(uint8_t reg, uint8_t length)
 {
     switch (reg)
     {
-    case I2C_Slave_Command_Reset_MCU:
+    case Command_ID_I2C_Slave_Reset_MCU:
         // 1. Clear flag (Normal Reset)
         *BOOT_FLAG_ADDR = 0;
 
@@ -37,7 +37,7 @@ void onWrite(uint8_t reg, uint8_t length)
             ; // Wait for death
         break;
 
-    case I2C_Slave_Command_Jump_To_Bootloader:
+    case Command_ID_I2C_Slave_Jump_To_Bootloader:
         // 1. Set Flag (Stay in Bootloader after reset)
         *BOOT_FLAG_ADDR = BOOT_MAGIC_VALUE;
 

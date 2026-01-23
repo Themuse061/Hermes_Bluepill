@@ -1,23 +1,23 @@
 #pragma once
 
 // I2C Slave Commands
-#define I2C_Slave_Command_Reset_MCU 0x00			 // (universal)
-#define I2C_Slave_Command_Jump_To_Bootloader 0x01	 // (universal)
-#define I2C_Slave_Command_Flash_Set_Pointer 0x02	 // (universal)
-#define I2C_Slave_Command_Flash_Read_Page 0x03		 // (universal)
-#define I2C_Slave_Command_Flash_Write_Page 0x04		 // (universal)
-#define I2C_Slave_Command_Flash_Check_For_Error 0x05 // (universal)
+#define Command_ID_I2C_Slave_Reset_MCU 0x00				// (universal)
+#define Command_ID_I2C_Slave_Jump_To_Bootloader 0x01	// (universal)
+#define Command_ID_I2C_Slave_Flash_Set_Pointer 0x02		// (universal)
+#define Command_ID_I2C_Slave_Flash_Read_Page 0x03		// (universal)
+#define Command_ID_I2C_Slave_Flash_Write_Page 0x04		// (universal)
+#define Command_ID_I2C_Slave_Flash_Check_For_Error 0x05 // (universal)
 
-#define I2C_Slave_Command_GPIO_Set 0x10 // (dark_times)
+#define Command_ID_I2C_Slave_GPIO_Set 0x10 // (dark_times)
 
 // USB Device Commands
-#define USB_Device_Command_I2C_Write 0x01
-#define USB_Device_Command_I2C_Send_Receive 0x02
-#define USB_Device_Command_Echo 0x03
-#define USB_Device_Command_Ping 0x04
-#define USB_Device_Command_Delay_Ms 0x05
+#define Command_ID_USB_Device_I2C_Write 0x01
+#define Command_ID_USB_Device_I2C_Send_Receive 0x02
+#define Command_ID_USB_Device_Echo 0x03
+#define Command_ID_USB_Device_Ping 0x04
+#define Command_ID_USB_Device_Delay_Ms 0x05
 
-#define USB_Device_Command_PC_Short_Data_Return 0xFF
+#define Command_ID_USB_Device_PC_Short_Data_Return 0xFF
 
 /*
  Command description

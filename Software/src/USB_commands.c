@@ -1,26 +1,23 @@
-#include "USB_commands.h"
-#include "usb_serial.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "helper.h"
 
-#define I2C_Slave_Command_Reset_MCU 0x00           // (universal)
-#define I2C_Slave_Command_Jump_To_Bootloader 0x01  // (universal)
-#define I2C_Slave_Command_Write_Flash 0x02         // (universal)
-#define I2C_Slave_Command_Read_Flash 0x03          // (universal)
-#define I2C_Slave_Command_Go_To_Flash_Address 0x04 // (universal)
+#define Command_ID_I2C_Slave_Reset_MCU 0x00           // (universal)
+#define Command_ID_I2C_Slave_Jump_To_Bootloader 0x01  // (universal)
+#define Command_ID_I2C_Slave_Write_Flash 0x02         // (universal)
+#define Command_ID_I2C_Slave_Read_Flash 0x03          // (universal)
+#define Command_ID_I2C_Slave_Go_To_Flash_Address 0x04 // (universal)
 
-#define I2C_Slave_Command_GPIO_Set 0x10 // (dark_times)
+#define Command_ID_I2C_Slave_GPIO_Set 0x10 // (dark_times)
 
 // USB Device Commands
-#define USB_Device_Command_I2C_Write 0x01
-#define USB_Device_Command_I2C_Send_Receive 0x02
-#define USB_Device_Command_Echo 0x03
+#define Command_ID_USB_Device_I2C_Write 0x01
+#define Command_ID_USB_Device_I2C_Send_Receive 0x02
+#define Command_ID_USB_Device_Echo 0x03
 #define CMD_PING 0x04
-#define USB_Device_Command_Delay_Ms 0x05
+#define Command_ID_USB_Device_Delay_Ms 0x05
 
-#define USB_Device_Command_PC_Short_Data_Return 0xFF
+#define Command_ID_USB_Device_PC_Short_Data_Return 0xFF
 
 static void log_packet(const char *cmd_name, const uint8_t *data, uint8_t len)
 {
@@ -83,7 +80,7 @@ void USB_command_echo(const uint8_t *data, uint8_t len)
     }
 
     packet[0] = packet_len;
-    packet[1] = USB_Device_Command_Echo;
+    packet[1] = Command_ID_USB_Device_Echo;
     memcpy(&packet[2], data, len);
 
     log_packet("Echo", packet, packet_len);
@@ -109,7 +106,7 @@ void USB_command_i2c_write(uint8_t address, const uint8_t *data, uint8_t len)
     }
 
     packet[0] = packet_len;
-    packet[1] = USB_Device_Command_I2C_Write;
+    packet[1] = Command_ID_USB_Device_I2C_Write;
     packet[2] = address;
     memcpy(&packet[3], data, len);
 
@@ -135,7 +132,7 @@ void USB_command_i2c_send_receive(uint8_t address, const uint8_t *write_data, ui
     }
 
     packet[0] = packet_len;
-    packet[1] = USB_Device_Command_I2C_Send_Receive;
+    packet[1] = Command_ID_USB_Device_I2C_Send_Receive;
     packet[2] = address;
     packet[3] = write_len;
     packet[4] = read_len;
@@ -146,8 +143,8 @@ void USB_command_i2c_send_receive(uint8_t address, const uint8_t *write_data, ui
 
     // Expect response:
     // uint8_t[0] - Packet Length
-    // uint8_t[1] - USB_Device_Command_PC_Short_Data_Return (0xFF)
-    // uint8_t[2] - USB_Device_Command_I2C_Send_Receive (0x02)
+    // uint8_t[1] - Command_ID_USB_Device_PC_Short_Data_Return (0xFF)
+    // uint8_t[2] - Command_ID_USB_Device_I2C_Send_Receive (0x02)
     // uint8_t[3] - Address
     // uint8_t[4+] - returned data
 
@@ -161,7 +158,7 @@ void USB_command_i2c_send_receive(uint8_t address, const uint8_t *write_data, ui
     if (bytes_read > 0)
     {
         // Simple validation
-        if (buffer[1] == USB_Device_Command_PC_Short_Data_Return && buffer[2] == USB_Device_Command_I2C_Send_Receive)
+        if (buffer[1] == Command_ID_USB_Device_PC_Short_Data_Return && buffer[2] == Command_ID_USB_Device_I2C_Send_Receive)
         {
             // Copy data to user buffer
             // Data starts at index 4
@@ -209,7 +206,7 @@ void USB_command_delay(uint32_t delay)
     uint8_t packet[6];
 
     packet[0] = packet_len;
-    packet[1] = USB_Device_Command_Delay_Ms;
+    packet[1] = Command_ID_USB_Device_Delay_Ms;
     packet[2] = delay & 0xFF;
     packet[3] = (delay >> 8) & 0xFF;
     packet[4] = (delay >> 16) & 0xFF;

@@ -2,11 +2,6 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <USB_commands.h>
-#include <usb_serial.h>
-#include <Command_ID.h>
-#include <bootloader_uploader.h>
-#include <helper.h>
 
 // Platform-specific sleep
 #ifdef _WIN32
@@ -22,7 +17,7 @@
 // ============================================================================
 #define PAGE_SIZE 64
 
-// Error Codes (Returned by I2C_Slave_Command_Flash_Check_For_Error)
+// Error Codes (Returned by Command_ID_I2C_Slave_Flash_Check_For_Error)
 #define ERR_OK 0x00
 #define ERR_CSUM 0x01
 #define ERR_ADDR 0x02
@@ -37,7 +32,7 @@
 
 void MCU_Reset(uint8_t i2c_addr)
 {
-	uint8_t cmd = I2C_Slave_Command_Reset_MCU;
+	uint8_t cmd = Command_ID_I2C_Slave_Reset_MCU;
 	USB_command_i2c_write(i2c_addr, &cmd, 1);
 }
 
@@ -46,32 +41,32 @@ void MCU_Jump_to_Bootloader(uint8_t i2c_addr)
 	uint8_t bootloader_packet[] = {
 		// reset
 		4,
-		USB_Device_Command_I2C_Write,
+		Command_ID_USB_Device_I2C_Write,
 		i2c_addr,
-		I2C_Slave_Command_Reset_MCU,
+		Command_ID_I2C_Slave_Reset_MCU,
 		0b00000011,
 
 		// Delay 20ms
 		3,
-		USB_Device_Command_Delay_Ms,
+		Command_ID_USB_Device_Delay_Ms,
 		20,
 
 		// jumpt to bootloader
 		4,
-		USB_Device_Command_I2C_Write,
+		Command_ID_USB_Device_I2C_Write,
 		i2c_addr,
-		I2C_Slave_Command_Jump_To_Bootloader,
+		Command_ID_I2C_Slave_Jump_To_Bootloader,
 
 		// Delay 20ms
 		3,
-		USB_Device_Command_Delay_Ms,
+		Command_ID_USB_Device_Delay_Ms,
 		20,
 
 		// jumpt to bootloader
 		4,
-		USB_Device_Command_I2C_Write,
+		Command_ID_USB_Device_I2C_Write,
 		i2c_addr,
-		I2C_Slave_Command_Jump_To_Bootloader,
+		Command_ID_I2C_Slave_Jump_To_Bootloader,
 
 	};
 	USB_write(bootloader_packet, sizeof(bootloader_packet));
@@ -84,7 +79,7 @@ void MCU_Jump_to_Bootloader(uint8_t i2c_addr)
 void MCU_Flash_Set_Pointer(uint8_t i2c_addr, uint16_t offset)
 {
 	uint8_t pkt[3];
-	pkt[0] = I2C_Slave_Command_Flash_Set_Pointer;
+	pkt[0] = Command_ID_I2C_Slave_Flash_Set_Pointer;
 	pkt[1] = offset & 0xFF;		   // Low Byte
 	pkt[2] = (offset >> 8) & 0xFF; // High Byte
 
@@ -96,7 +91,7 @@ void MCU_Flash_Set_Pointer(uint8_t i2c_addr, uint16_t offset)
  */
 uint8_t MCU_Flash_Check_Error(uint8_t i2c_addr)
 {
-	uint8_t cmd = I2C_Slave_Command_Flash_Check_For_Error;
+	uint8_t cmd = Command_ID_I2C_Slave_Flash_Check_For_Error;
 	uint8_t response = 0xFF; // Default to unknown error
 
 	// Write [0x05], then read 1 byte back into 'response'
@@ -110,7 +105,7 @@ uint8_t MCU_Flash_Check_Error(uint8_t i2c_addr)
  */
 void MCU_Flash_Read_Page(uint8_t i2c_addr, uint8_t *buffer)
 {
-	uint8_t cmd = I2C_Slave_Command_Flash_Read_Page;
+	uint8_t cmd = Command_ID_I2C_Slave_Flash_Read_Page;
 
 	// Write [0x03], then read 64 bytes back into 'buffer'
 	USB_command_i2c_send_receive(i2c_addr, &cmd, 1, PAGE_SIZE, buffer);
@@ -124,7 +119,7 @@ void MCU_Flash_Write_Page(uint8_t i2c_addr, const uint8_t *data)
 	// Buffer: [CMD] + [64 Bytes Data] + [Checksum]
 	uint8_t pkt[1 + PAGE_SIZE + 1];
 
-	pkt[0] = I2C_Slave_Command_Flash_Write_Page;
+	pkt[0] = Command_ID_I2C_Slave_Flash_Write_Page;
 
 	// Copy data
 	memcpy(&pkt[1], data, PAGE_SIZE);

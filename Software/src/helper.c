@@ -1,4 +1,3 @@
-#include "helper.h"
 #include <windows.h>
 
 void delay_ms(int ms) {

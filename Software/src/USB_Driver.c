@@ -3,10 +3,11 @@
  * @brief Implementation of USB serial port abstraction.
  */
 
-#include "usb_serial.h"
 #include <libserialport.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <Usb_driver.h>
+
+const char *COM_PORT = "COM14";
+const int BAUD_RATE = 115200;
 
 // Internal handle to the serial port
 static struct sp_port *port = NULL;
@@ -14,25 +15,29 @@ static struct sp_port *port = NULL;
 // Internal handle to event set for waiting
 static struct sp_event_set *event_set = NULL;
 
-int USB_init(const char *port_name, int baud_rate) {
-    if (port != NULL) {
+int USB_init()
+{
+    if (port != NULL)
+    {
         // Already initialized
         return -1;
     }
 
     enum sp_return ret;
 
-    ret = sp_get_port_by_name(port_name, &port);
-    if (ret != SP_OK) return ret;
+    ret = sp_get_port_by_name(COM_PORT, &port);
+    if (ret != SP_OK)
+        return ret;
 
     ret = sp_open(port, SP_MODE_READ_WRITE);
-    if (ret != SP_OK) {
+    if (ret != SP_OK)
+    {
         sp_free_port(port);
         port = NULL;
         return ret;
     }
 
-    sp_set_baudrate(port, baud_rate);
+    sp_set_baudrate(port, 115200);
     sp_set_bits(port, 8);
     sp_set_parity(port, SP_PARITY_NONE);
     sp_set_stopbits(port, 1);
@@ -41,45 +46,63 @@ int USB_init(const char *port_name, int baud_rate) {
     return 0;
 }
 
-void USB_deinit(void) {
-    if (event_set != NULL) {
+void USB_deinit(void)
+{
+    if (event_set != NULL)
+    {
         sp_free_event_set(event_set);
         event_set = NULL;
     }
 
-    if (port != NULL) {
+    if (port != NULL)
+    {
         sp_close(port);
         sp_free_port(port);
         port = NULL;
     }
 }
 
-int USB_write(const unsigned char *data, int length) {
-    if (port == NULL) return -1;
+int USB_write(const unsigned char *data, int length)
+{
+    if (port == NULL)
+        return -1;
     // Timeout 0 means wait indefinitely
-    return sp_blocking_write(port, data, length, 0);
+    if (sp_blocking_write(port, data, length, 0) < 0)
+    {
+        return -1;
+    };
+    return sp_drain(port);
 }
 
-int USB_read(unsigned char *buffer, int length, unsigned int timeout_ms) {
-    if (port == NULL) return -1;
+int USB_read(unsigned char *buffer, int length, unsigned int timeout_ms)
+{
+    if (port == NULL)
+        return -1;
     return sp_blocking_read(port, buffer, length, timeout_ms);
 }
 
-int USB_check_for_data(void) {
-    if (port == NULL) return -1;
+int USB_check_for_data(void)
+{
+    if (port == NULL)
+        return -1;
     return sp_input_waiting(port);
 }
 
-int USB_wait_for_data(unsigned int max_delay_ms) {
-    if (port == NULL) return -1;
+int USB_wait_for_data(unsigned int max_delay_ms)
+{
+    if (port == NULL)
+        return -1;
 
     // Allocate event set if not already done
     // We only need to do this once unless the port changes
-    if (event_set == NULL) {
-        if (sp_new_event_set(&event_set) != SP_OK) {
+    if (event_set == NULL)
+    {
+        if (sp_new_event_set(&event_set) != SP_OK)
+        {
             return -1;
         }
-        if (sp_add_port_events(event_set, port, SP_EVENT_RX_READY) != SP_OK) {
+        if (sp_add_port_events(event_set, port, SP_EVENT_RX_READY) != SP_OK)
+        {
             sp_free_event_set(event_set);
             event_set = NULL;
             return -1;

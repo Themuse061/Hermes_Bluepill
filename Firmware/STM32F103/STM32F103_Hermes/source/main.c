@@ -69,23 +69,23 @@ int main(void)
 			{
 				switch (USB_Commands[i][USB_Command_Byte_Command])
 				{
-				case USB_Device_Command_I2C_Write:
+				case Command_ID_USB_Device_I2C_Write:
 					USB_command_handler_I2C_write(&USB_Commands[i][0]);
 					break;
 
-				case USB_Device_Command_I2C_Send_Receive:
+				case Command_ID_USB_Device_I2C_Send_Receive:
 					USB_command_handler_I2C_send_recieve(&USB_Commands[i][0]);
 					break;
 
-				case USB_Device_Command_Echo:
+				case Command_ID_USB_Device_Echo:
 					USB_command_handler_echo(&USB_Commands[i][0]);
 					break;
 
-				case USB_Device_Command_Ping:
+				case Command_ID_USB_Device_Ping:
 					USB_command_handler_ping(&USB_Commands[i][0]);
 					break;
 
-				case USB_Device_Command_Delay_Ms:
+				case Command_ID_USB_Device_Delay_Ms:
 					USB_command_handler_delay_ms(&USB_Commands[i][0]);
 					break;
 

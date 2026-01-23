@@ -20,26 +20,26 @@ volatile uint8_t i2c_registers[255] = {0x00};
  * 0x10 - GPIO Set (implemented)
  */
 
-#define I2C_Slave_Command_Reset_MCU 0x00
-#define I2C_Slave_Command_Jump_To_Bootloader 0x01
-#define I2C_Slave_Command_Write_Flash 0x02
-#define I2C_Slave_Command_Read_Flash 0x03
-#define I2C_Slave_Command_Go_To_Flash_Address 0x04
+#define Command_ID_I2C_Slave_Reset_MCU 0x00
+#define Command_ID_I2C_Slave_Jump_To_Bootloader 0x01
+#define Command_ID_I2C_Slave_Write_Flash 0x02
+#define Command_ID_I2C_Slave_Read_Flash 0x03
+#define Command_ID_I2C_Slave_Go_To_Flash_Address 0x04
 
-#define I2C_Slave_Command_GPIO_Set 0x10
+#define Command_ID_I2C_Slave_GPIO_Set 0x10
 
 void onWrite(uint8_t reg, uint8_t length)
 {
 	switch (reg)
 	{
-	case I2C_Slave_Command_Reset_MCU:
+	case Command_ID_I2C_Slave_Reset_MCU:
 		NVIC_SystemReset();
 		while (1)
 		{
 		}
 		break;
 
-	case I2C_Slave_Command_GPIO_Set:
+	case Command_ID_I2C_Slave_GPIO_Set:
 		// Master sent: [Addr] [CMD_GPIO] [Bitmask]
 		// Library put [Bitmask] into i2c_registers[CMD_GPIO]
 		// So we read from i2c_registers[reg]

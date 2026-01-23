@@ -3,15 +3,9 @@
  * @brief USB serial port abstraction layer.
  */
 
-#ifndef USB_SERIAL_H
-#define USB_SERIAL_H
-
+#pragma once
 #include <stdint.h>
 #include <stdbool.h>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /**
  * @brief Initialize the USB serial port.
@@ -71,9 +65,3 @@ int USB_check_for_data(void);
  * @return 0 if data is available (or timeout occurred), negative error code on system error.
  */
 int USB_wait_for_data(unsigned int max_delay_ms);
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif // USB_SERIAL_H

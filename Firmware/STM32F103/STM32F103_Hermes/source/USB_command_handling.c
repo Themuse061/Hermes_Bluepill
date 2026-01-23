@@ -76,8 +76,8 @@ void USB_command_handler_I2C_send_recieve(uint8_t *command_array)
 	// Send USB_command_PC_short_data_return to PC
 	uint8_t USB_send_buffer[USB_Command_max_length] = {0};
 	USB_send_buffer[0] = read_length + 4; // Packet Length
-	USB_send_buffer[1] = USB_Device_Command_PC_Short_Data_Return;
-	USB_send_buffer[2] = USB_Device_Command_I2C_Send_Receive;
+	USB_send_buffer[1] = Command_ID_USB_Device_PC_Short_Data_Return;
+	USB_send_buffer[2] = Command_ID_USB_Device_I2C_Send_Receive;
 	USB_send_buffer[3] = address;
 	memcpy(&USB_send_buffer[4], &read_data[0], read_length);
 
@@ -137,14 +137,14 @@ void USB_command_handler_delay_ms(uint8_t *command_array)
 */
 
 /**
- * COMMAND 0xFF USB_Device_Command_PC_Short_Data_Return
+ * COMMAND 0xFF Command_ID_USB_Device_PC_Short_Data_Return
  *
  * Returns data when calling various operations
  * FORMAT
  * uint8_t[0] - Packet Length
  * uint8_t[1] - This Command
  * uint8_t[2] - What command called this command
- * 		For command 0x02 USB_Device_Command_I2C_Send_Receive
+ * 		For command 0x02 Command_ID_USB_Device_I2C_Send_Receive
  *			uint8_t[3] - Address which replied
  *			uint8_t[4+] - returned data
  */

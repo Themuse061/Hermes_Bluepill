@@ -1,5 +1,3 @@
-#include "USB_commands_high.h"
-#include "USB_commands.h"
 #include <stdio.h>
 
 #define TCA9554_ADDR 0x38
@@ -30,9 +28,9 @@ void ch32_small_expander_write(uint8_t addr, uint8_t data)
 {
     // Mask data to lower 3 bits as requested
     uint8_t masked_data = data & 0x07;
-    
+
     // Command format: [0x10, data]
     uint8_t cmd[] = {CH32_CMD_GPIO_SET, masked_data};
-    
+
     USB_command_i2c_write(addr, cmd, sizeof(cmd));
 }

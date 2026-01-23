@@ -7,10 +7,6 @@
 #include "helper.h"
 #include <conio.h>
 
-// Configuration
-const char *COM_PORT = "COM14";
-const int BAUD_RATE = 115200;
-
 #define TCA9554_is_connected 1
 #define TCA9554_is_initialized 1
 #define Hot_plate_is_connected 1
@@ -74,31 +70,31 @@ int main()
 		uint8_t delay_packet[] = {
 			// set to 0011
 			5,
-			USB_Device_Command_I2C_Write,
+			Command_ID_USB_Device_I2C_Write,
 			TCA9554_ADDR,
 			0x01,
 			0b00000011,
 
 			// Delay 200ms
 			3,
-			USB_Device_Command_Delay_Ms,
+			Command_ID_USB_Device_Delay_Ms,
 			200,
 
 			// 1100
 			5,
-			USB_Device_Command_I2C_Write,
+			Command_ID_USB_Device_I2C_Write,
 			TCA9554_ADDR,
 			0x01,
 			0b00001100,
 
 			// Delay 200ms
 			3,
-			USB_Device_Command_Delay_Ms,
+			Command_ID_USB_Device_Delay_Ms,
 			200,
 
 			// 0000
 			5,
-			USB_Device_Command_I2C_Write,
+			Command_ID_USB_Device_I2C_Write,
 			TCA9554_ADDR,
 			0x01,
 			0x00,
