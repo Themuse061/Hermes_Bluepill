@@ -1,13 +1,8 @@
-/**
- * @file usb_serial.c
- * @brief Implementation of USB serial port abstraction.
- */
 
+#include "Usb_driver.h"
 #include <libserialport.h>
-#include <Usb_driver.h>
-
-const char *COM_PORT = "COM14";
-const int BAUD_RATE = 115200;
+#include <stdio.h>
+#include <stdlib.h>
 
 // Internal handle to the serial port
 static struct sp_port *port = NULL;
@@ -15,7 +10,7 @@ static struct sp_port *port = NULL;
 // Internal handle to event set for waiting
 static struct sp_event_set *event_set = NULL;
 
-int USB_init()
+int USB_init(const char *port_name, int baud_rate)
 {
     if (port != NULL)
     {
@@ -25,7 +20,7 @@ int USB_init()
 
     enum sp_return ret;
 
-    ret = sp_get_port_by_name(COM_PORT, &port);
+    ret = sp_get_port_by_name(port_name, &port);
     if (ret != SP_OK)
         return ret;
 
@@ -37,7 +32,7 @@ int USB_init()
         return ret;
     }
 
-    sp_set_baudrate(port, 115200);
+    sp_set_baudrate(port, baud_rate);
     sp_set_bits(port, 8);
     sp_set_parity(port, SP_PARITY_NONE);
     sp_set_stopbits(port, 1);
@@ -67,11 +62,7 @@ int USB_write(const unsigned char *data, int length)
     if (port == NULL)
         return -1;
     // Timeout 0 means wait indefinitely
-    if (sp_blocking_write(port, data, length, 0) < 0)
-    {
-        return -1;
-    };
-    return sp_drain(port);
+    return sp_blocking_write(port, data, length, 0);
 }
 
 int USB_read(unsigned char *buffer, int length, unsigned int timeout_ms)
