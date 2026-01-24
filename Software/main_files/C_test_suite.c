@@ -42,8 +42,7 @@ int main()
 		return 1;
 	}
 
-	printf("\n\n");
-	printf("=========== Testing ping with USB writes ===========\n");
+	printf("\n\n=========== Testing ping with USB writes ===========\n");
 	uint8_t USB_raw_ping[] = {2, Command_ID_USB_Device_Ping};
 	printf("sending: ");
 	print_array_in_hex(USB_raw_ping, 2);
@@ -56,35 +55,45 @@ int main()
 	printf("reading: ");
 	print_array_in_hex(USB_ping_read, 9);
 
-	printf("\n\n");
-	printf("=========== Testing ping with Hermes stack ===========\n");
+	printf("\n\n=========== Testing ping with Hermes stack and manual read ===========\n");
 
-	printf("Current Stack Height %i\n", Hermes_Check_Stack_Length());
+	printf("Current Stack Length %i\n", Hermes_Check_Stack_Length());
 	printf("Current Stack Height %i\n", Hermes_Check_Stack_Height());
 
 	printf("adding ping\n");
 	Stack_add_ping();
 
-	printf("Current Stack Height %i\n", Hermes_Check_Stack_Length());
+	printf("Current Stack Length %i\n", Hermes_Check_Stack_Length());
 	printf("Current Stack Height %i\n", Hermes_Check_Stack_Height());
 
 	uint8_t ping_data[] = {0x09, 0x04, 0xFF, 0xaa, 0x00, 0x11, 0x00, 0xaa, 0xFF};
-	uint8_t ping_read[sizeof(ping_data)];
+	uint8_t ping_manual_read[sizeof(ping_data)];
 
 	printf("Flushing Stack\n");
 	Hermes_Flush_Stack();
 	delay_ms(2000);
-	printf("Current Stack Height %i\n", Hermes_Check_Stack_Length());
+	printf("Current Stack Length %i\n", Hermes_Check_Stack_Length());
 	printf("Current Stack Height %i\n", Hermes_Check_Stack_Height());
-	Hermes_Read_Buffer_USB(ping_read, sizeof(ping_read));
+	Hermes_Read_Buffer_USB(ping_manual_read, sizeof(ping_manual_read));
 
 	printf("read: ");
-	print_array_in_hex(ping_read, sizeof(ping_read));
+	print_array_in_hex(ping_manual_read, sizeof(ping_manual_read));
 
-	printf("--- Test Complete ---\n");
+	printf("\n\n=========== Testing ping with Hermes flush and read ===========\n");
 
-	// 7. Cleanup
+	printf("adding ping\n");
+	Stack_add_ping();
+
+	uint8_t ping_hermes_read[sizeof(ping_data)];
+	Hermes_Flush_Stack_with_Read(ping_hermes_read, sizeof(ping_hermes_read));
+
+	printf("read: ");
+	print_array_in_hex(ping_hermes_read, sizeof(ping_hermes_read));
+
+	//  Cleanup
+	printf("\n\n\n");
 	USB_deinit();
+	printf("\n--- Test Complete ---\n");
 
 	// 8. wait for user input
 	// printf("Press any key to exit...\n");

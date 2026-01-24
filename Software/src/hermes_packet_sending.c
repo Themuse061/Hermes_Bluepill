@@ -121,10 +121,19 @@ int Hermes_Flush_Stack(void)
 	return sent;
 }
 
-int Hermes_Flush_Stack_with_wait(void)
+int Hermes_Flush_Stack_with_Read(uint8_t *read_data_buffer, uint8_t len)
 {
+	int Flush_Result = Hermes_Flush_Stack();
+	if (Flush_Result)
+	{
+		return Hermes_Read_Buffer_USB(read_data_buffer, len);
+	}
+	else
+	{
+		return Flush_Result;
+	}
 }
 
-int Hermes_Flush_Stack_with_Read(uint8_t *read_data_buffer, uint8_t len)
+int Hermes_Flush_Stack_with_wait(void)
 {
 }
