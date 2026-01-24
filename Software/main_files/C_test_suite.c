@@ -41,6 +41,7 @@ int main()
 		fprintf(stderr, "Error: Failed to open USB port");
 		return 1;
 	}
+
 	printf("\n\n");
 	printf("=========== Testing ping with USB writes ===========\n");
 	uint8_t USB_raw_ping[] = {2, Command_ID_USB_Device_Ping};
@@ -50,10 +51,10 @@ int main()
 	USB_write(USB_raw_ping, 2);
 	delay_ms(10);
 
-	uint8_t USB_ping_read[10];
-	USB_read(USB_ping_read, 10, 5000);
+	uint8_t USB_ping_read[9];
+	USB_read(USB_ping_read, 9, 5000);
 	printf("reading: ");
-	print_array_in_hex(USB_ping_read, 10);
+	print_array_in_hex(USB_ping_read, 9);
 
 	printf("\n\n");
 	printf("=========== Testing ping with Hermes stack ===========\n");
