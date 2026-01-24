@@ -12,8 +12,23 @@ int Stack_add_ping(void)
 
     if (USB_COMMANDS_VERBOSE_LEVEL > 1)
     {
-        printf("VERBOSE: Adding ping to stack");
+        printf("LOG 2: Adding ping to stack\n");
     }
 
     return Hermes_Add_Command_To_Stack(packet, sizeof(packet));
+}
+
+// #define Command_ID_USB_Device_I2C_Write 0x01
+// #define Command_ID_USB_Device_I2C_Send_Receive 0x02
+// #define Command_ID_USB_Device_Echo 0x03
+// #define Command_ID_USB_Device_Ping 0x04
+// #define Command_ID_USB_Device_Delay_Ms 0x05
+
+int Stack_add_echo(uint8_t *data, uint8_t len)
+{
+    if (USB_COMMANDS_VERBOSE_LEVEL > 1)
+    {
+        printf("LOG 2: Adding echo to stack\n");
+    }
+    return Hermes_Add_Command_To_Stack(data, len);
 }

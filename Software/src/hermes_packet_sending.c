@@ -40,7 +40,7 @@ int Hermes_Add_Command_To_Stack(uint8_t *new_data, uint8_t len)
 	// check if the data is empty
 	if (new_data == NULL || len == 0)
 	{
-		printf("Hermes_Add_Command_To_Stack Failed, -1 Null data or len 0\n");
+		printf("LOG 0: Hermes_Add_Command_To_Stack Failed, -1 Null data or len 0\n");
 		return -1;
 	}
 
@@ -48,21 +48,21 @@ int Hermes_Add_Command_To_Stack(uint8_t *new_data, uint8_t len)
 	// (This check is less relevant if we are just streaming bytes, but strict packet widths might be enforced)
 	if (len > HERMES_MAX_PACKET_WIDTH)
 	{
-		printf("Hermes_Add_Command_To_Stack Failed, -2 Data too long\n");
+		printf("LOG 0: Hermes_Add_Command_To_Stack Failed, -2 Data too long\n");
 		return -2;
 	}
 
 	// Check total buffer overflow
 	if ((hermes_packet_stack_current_len + len) > HERMES_TOTAL_BUFFER_SIZE)
 	{
-		printf("Hermes_Add_Command_To_Stack Failed, -3 Buffer full\n");
+		printf("LOG 0: Hermes_Add_Command_To_Stack Failed, -3 Buffer full\n");
 		return -3; // Buffer full
 	}
 
 	// Check packet count limit
 	if (hermes_packet_stack_height >= HERMES_MAX_STACK_HEIGHT)
 	{
-		printf("Hermes_Add_Command_To_Stack Failed, -4 Stack full\n");
+		printf("LOG 0 : Hermes_Add_Command_To_Stack Failed, -4 Stack full\n");
 		return -4; // Too many packets
 	}
 
@@ -73,10 +73,9 @@ int Hermes_Add_Command_To_Stack(uint8_t *new_data, uint8_t len)
 
 	if (HERMES_VERBOSE_LEVEL > 1)
 	{
-		printf("added packet to stack: ");
+		printf("LOG 2: added packet to stack: ");
 		log_packet(new_data, len);
 		printf("\n");
-		printf("Hermes_Add_Command_To_Stack Successful\n");
 	}
 
 	return 1;
@@ -101,7 +100,7 @@ int Hermes_Flush_Stack(void)
 	// Send the data
 	if (HERMES_VERBOSE_LEVEL > 0)
 	{
-		printf("flushing stack: ");
+		printf("LOG 1: flushing stack: ");
 		log_packet(hermes_packet_stack, len_to_send);
 		printf("\n");
 	}
@@ -109,13 +108,13 @@ int Hermes_Flush_Stack(void)
 	int sent = USB_write(hermes_packet_stack, len_to_send);
 	if (sent <= 0)
 	{
-		printf("Hermes_Flush_Stack Failed, USB_write error: %d\n", sent);
+		printf("LOG 0: Hermes_Flush_Stack Failed, USB_write error: %d\n", sent);
 	}
 	else
 	{
 		if (HERMES_VERBOSE_LEVEL > 1)
 		{
-			printf("Hermes_Flush_Stack Successful, sent %d bytes\n", sent);
+			printf("LOG 2: Hermes_Flush_Stack Successful, sent %d bytes\n", sent);
 		}
 	}
 	return sent;
