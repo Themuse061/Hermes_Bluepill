@@ -11,7 +11,7 @@
 
 #define Test_TCA9554_I2C_write 0
 // Uses I2C write and command packing
-#define Test_CH32V003_I2C_write_and_delay 0
+#define Test_CH32V003_I2C_write_and_delay 1
 // Uses I2C write, command packing and delay
 #define TCA9554_ADDR 0x38
 #define TCA9554_REG_OUTPUT 0x01

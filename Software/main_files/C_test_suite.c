@@ -57,6 +57,7 @@ int main()
 		fprintf(stderr, "Error: Failed to open USB port");
 		return 1;
 	}
+	helper_start_timer();
 
 	if (Test_ping_with_USB_writes)
 	{
@@ -276,6 +277,7 @@ int main()
 	printf("\n\n\n");
 	USB_deinit();
 	printf("\n--- Test Complete ---\n");
+	helper_end_timer();
 
 	// 8. wait for user input
 	// printf("Press any key to exit...\n");

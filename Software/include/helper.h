@@ -1,6 +1,4 @@
-#ifndef HELPER_H
-#define HELPER_H
-
+#pragma once
 #include <stdint.h>
 
 /**
@@ -10,4 +8,5 @@
  */
 void delay_ms(int ms);
 
-#endif // HELPER_H
+void helper_start_timer();
+void helper_end_timer();
