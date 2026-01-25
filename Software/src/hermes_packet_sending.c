@@ -35,7 +35,7 @@ int Hermes_Check_Stack_Length(void)
 	return hermes_packet_stack_current_len;
 }
 
-int Hermes_Add_Command_To_Stack(uint8_t *new_data, uint8_t len)
+int Hermes_Add_Command_To_Stack_Withouta_Advancing_The_Stack_Height(uint8_t *new_data, uint8_t len)
 {
 	// check if the data is empty
 	if (new_data == NULL || len == 0)
@@ -69,7 +69,6 @@ int Hermes_Add_Command_To_Stack(uint8_t *new_data, uint8_t len)
 	// Copy the data
 	memcpy(&hermes_packet_stack[hermes_packet_stack_current_len], new_data, len);
 	hermes_packet_stack_current_len += len;
-	hermes_packet_stack_height++;
 
 	if (HERMES_VERBOSE_LEVEL > 1)
 	{
@@ -79,6 +78,15 @@ int Hermes_Add_Command_To_Stack(uint8_t *new_data, uint8_t len)
 	}
 
 	return 1;
+}
+
+int Hermes_Add_Command_To_Stack(uint8_t *new_data, uint8_t len)
+{
+	int future_return = Hermes_Add_Command_To_Stack_Withouta_Advancing_The_Stack_Height(new_data, len);
+
+	hermes_packet_stack_height++;
+
+	return future_return;
 }
 
 int Hermes_Read_Buffer_USB(uint8_t *read_pointer, int len)

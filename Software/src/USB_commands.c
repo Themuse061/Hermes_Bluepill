@@ -24,8 +24,18 @@ int Stack_add_ping(void)
 // #define Command_ID_USB_Device_Ping 0x04
 // #define Command_ID_USB_Device_Delay_Ms 0x05
 
+/**
+ * @brief Adds data to echo to buffer
+ *
+ * @param data ONLY DATA NO COMMAND NUMBER
+ */
 int Stack_add_echo(uint8_t *data, uint8_t len)
 {
+
+    uint8_t echo_header[] = {len + 2, Command_ID_USB_Device_Echo};
+
+    Hermes_Add_Command_To_Stack_Withouta_Advancing_The_Stack_Height(echo_header, 2);
+
     if (USB_COMMANDS_VERBOSE_LEVEL > 1)
     {
         printf("LOG 2: Adding echo to stack\n");

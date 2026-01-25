@@ -2,6 +2,8 @@
 
 #pragma once
 
+int Hermes_Add_Command_To_Stack_Withouta_Advancing_The_Stack_Height(uint8_t *new_data, uint8_t len);
+
 /**
  * @brief Adds a single command packet to the internal stack.
  *
