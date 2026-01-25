@@ -8,7 +8,12 @@
 #include "C_test_suite_config.h"
 #include <conio.h>
 
+// uint8_t data
 uint8_t ping_data[] = {0x09, 0x04, 0xFF, 0xaa, 0x00, 0x11, 0x00, 0xaa, 0xFF};
+uint8_t echo_data[] = {0x17, 0x12, 0x10, 0xaa, 0xbb, 0xcc, 0xdd, 0x17, 0x02};
+uint8_t TCA9554_init[] = {TCA9554_REG_CONFIG, 0x00};
+uint8_t TCA9554_off[] = {TCA9554_REG_OUTPUT, 0x00};
+uint8_t TCA9554_on[] = {TCA9554_REG_OUTPUT, 0b00001111};
 
 // Ideally, pass these as arguments to USB_init
 const char *COM_PORT = "COM14";
@@ -46,7 +51,10 @@ int main()
 
 		uint8_t USB_ping_read[9];
 		USB_read(USB_ping_read, 9, 5000);
-		printf("reading: ");
+
+		printf("expe: ");
+		print_array_in_hex(ping_data, sizeof(ping_data));
+		printf("read: ");
 		print_array_in_hex(USB_ping_read, 9);
 	}
 
@@ -73,6 +81,9 @@ int main()
 		printf("Current Stack Height %i\n", Hermes_Check_Stack_Height());
 		Hermes_Read_Buffer_USB(ping_manual_read, sizeof(ping_manual_read));
 
+		printf("expe: ");
+		print_array_in_hex(ping_data, sizeof(ping_data));
+
 		printf("read: ");
 		print_array_in_hex(ping_manual_read, sizeof(ping_manual_read));
 	}
@@ -88,6 +99,9 @@ int main()
 		uint8_t ping_hermes_read[sizeof(ping_data)];
 		Hermes_Flush_Stack_with_Read(ping_hermes_read, sizeof(ping_hermes_read));
 
+		printf("expe: ");
+		print_array_in_hex(ping_data, sizeof(ping_data));
+
 		printf("read: ");
 		print_array_in_hex(ping_hermes_read, sizeof(ping_hermes_read));
 	}
@@ -96,7 +110,7 @@ int main()
 	{
 
 		printf("\n\n=========== Testing echo ===========\n");
-		uint8_t echo_data[] = {0x17, 0x12, 0x10, 0xaa, 0xbb, 0xcc, 0xdd, 0x17, 0x02};
+
 		Stack_add_echo(echo_data, sizeof(echo_data));
 		uint8_t echo_return_data[sizeof(echo_data)];
 
@@ -107,6 +121,60 @@ int main()
 
 		printf("read: ");
 		print_array_in_hex(echo_return_data, sizeof(echo_return_data) + 2);
+	}
+
+	if (Test_TCA9554_I2C_write)
+	{
+		printf("\n\n=========== Testing I2C write with TCA9554 ===========\n");
+
+		// init
+		Stack_add_I2C_Write(TCA9554_ADDR, TCA9554_init, 2);
+
+		// set to low
+		Stack_add_I2C_Write(TCA9554_ADDR, TCA9554_off, 2);
+
+		// send
+		Hermes_Flush_Stack();
+		delay_ms(2000);
+
+		// Set high
+		Stack_add_I2C_Write(TCA9554_ADDR, TCA9554_on, 2);
+		Hermes_Flush_Stack();
+		delay_ms(2000);
+
+		// set low
+		Stack_add_I2C_Write(TCA9554_ADDR, TCA9554_off, 2);
+		Hermes_Flush_Stack();
+		delay_ms(2000);
+
+		// Set high
+		Stack_add_I2C_Write(TCA9554_ADDR, TCA9554_on, 2);
+		Hermes_Flush_Stack();
+		delay_ms(2000);
+
+		// set low
+		Stack_add_I2C_Write(TCA9554_ADDR, TCA9554_off, 2);
+		Hermes_Flush_Stack();
+		delay_ms(2000);
+	}
+
+	if (Test_CH32V003_I2C_write_and_delay)
+	{
+		printf("\n\n=========== Testing I2C write with TCA9554 and delay ===========\n");
+		Stack_add_I2C_Write(TCA9554_ADDR, TCA9554_init, 2);				   // init
+		Stack_add_I2C_Write(TCA9554_ADDR, TCA9554_off, 2);				   // set low
+		Stack_add_delay(200);											   // delay 200ms
+		Stack_add_I2C_Write(TCA9554_ADDR, TCA9554_on, 2);				   // set high
+		Stack_add_delay(200);											   // delay 200ms
+		Stack_add_I2C_Write(TCA9554_ADDR, TCA9554_off, 2);				   // set low
+		Stack_add_delay(200);											   // delay 200ms
+		Stack_add_I2C_Write(TCA9554_ADDR, TCA9554_on, 2);				   // set high
+		Stack_add_delay(200);											   // delay 200ms
+		Stack_add_I2C_Write(TCA9554_ADDR, TCA9554_off, 2);				   // set low
+		Stack_add_delay(200);											   // delay 200ms
+		printf("Current stack height: %i\n", Hermes_Check_Stack_Height()); // print stack height
+		Hermes_Flush_Stack();											   // flush stack
+		delay_ms(2000);													   // wait for commands to execute
 	}
 
 	//  Cleanup
