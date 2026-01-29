@@ -29,8 +29,6 @@ volatile uint8_t need_to_write = 0;
 // ===================================================================================
 // UTILS
 // ===================================================================================
-
-// Replaces Delay_Ms to save linking overhead
 void simple_delay(int cycles)
 {
     while (cycles--)
@@ -39,7 +37,6 @@ void simple_delay(int cycles)
     }
 }
 
-// Replaces NVIC_SystemReset to save function call overhead
 void raw_reset()
 {
     PFIC->SCTLR = (1 << 31) | (1 << 2);
@@ -66,7 +63,7 @@ void onWrite(uint8_t reg, uint8_t length)
         break;
     case CMD_READ:
     {
-        // Copy Flash -> Buffer so Master can read it
+        // Read Simulation: Copy from Flash (safe to read)
         uint8_t *src = (uint8_t *)flash_pointer;
         for (int i = 0; i < PAGE_SIZE; i++)
             i2c_buffer[reg + i] = src[i];
@@ -76,8 +73,6 @@ void onWrite(uint8_t reg, uint8_t length)
         need_to_write = 1;
         break;
     case CMD_CHECK_ERR:
-        // Optional: Clear error on write (stateless)
-        // We handle error reporting by writing to the buffer in Main
         break;
     }
 }
@@ -92,53 +87,69 @@ int main()
     // 1. Enable Clocks (A, C, D)
     RCC->APB2PCENR |= RCC_APB2Periph_GPIOA | RCC_APB2Periph_GPIOC | RCC_APB2Periph_GPIOD;
 
-    // 2. Configure LEDs (PD6, PA2, PC4)
-    // PD6(24), PA2(8), PC4(16) -> Output 10MHz (0x1)
+    // 2. Configure LEDs
     GPIOD->CFGLR &= ~(0xF << 24);
-    GPIOD->CFGLR |= (0x1 << 24);
+    GPIOD->CFGLR |= (0x1 << 24); // PD6
     GPIOA->CFGLR &= ~(0xF << 8);
-    GPIOA->CFGLR |= (0x1 << 8);
+    GPIOA->CFGLR |= (0x1 << 8); // PA2
     GPIOC->CFGLR &= ~(0xF << 16);
-    GPIOC->CFGLR |= (0x1 << 16);
+    GPIOC->CFGLR |= (0x1 << 16); // PC4
 
-    // 3. Configure I2C Pins (PC1, PC2) -> AF Open Drain (0xD)
+    // 3. Configure I2C Pins (PC1, PC2) -> AF Open Drain
     GPIOC->CFGLR &= ~(0xFF << 4);
     GPIOC->CFGLR |= (0xDD << 4);
 
-    // 4. Sanity Blink (PD6)
-    // ~200000 cycles approx 50ms at 48MHz (rough guess, timing not critical)
+    // 4. DIAGNOSTIC: STARTUP PATTERN (5 Rapid Blinks)
     for (int i = 0; i < 5; i++)
     {
         GPIOD->BSHR = (1 << 6);
-        simple_delay(200000);
+        simple_delay(100000);
         GPIOD->BCR = (1 << 6);
         simple_delay(200000);
     }
 
-    // 5. Init I2C (Pass NULL for Read Callback to save space)
+    // 5. Init I2C
     SetupI2CSlave(I2C_ADDR, i2c_buffer, sizeof(i2c_buffer), onWrite, NULL, false);
 
-    // 6. Decision
+    // 6. Decision Logic
     uint8_t stay = 0;
+
+    // CHECK 1: Missing Application (Panic Mode)
+    // Note: If you have previously flashed the App, this will pass.
+    // If chip is empty, it will trigger Panic Blinks.
+    if (*(uint32_t *)APP_START_ADDR == 0xFFFFFFFF)
+    {
+        stay = 1;
+        // DIAGNOSTIC: PANIC PATTERN (3 Slow Blinks)
+        for (int i = 0; i < 3; i++)
+        {
+            GPIOD->BSHR = (1 << 6);
+            simple_delay(2000000);
+            GPIOD->BCR = (1 << 6);
+            simple_delay(2000000);
+        }
+    }
+
+    // CHECK 2: Soft Reset Flag
     if (*BOOT_FLAG_ADDR == BOOT_MAGIC_VALUE)
         stay = 1;
     *BOOT_FLAG_ADDR = 0;
 
+    // CHECK 3: Window of Opportunity
     if (!stay)
     {
-        simple_delay(2000000); // Wait approx 500ms
+        simple_delay(2000000); // ~500ms Wait
         if (*BOOT_FLAG_ADDR == BOOT_MAGIC_VALUE)
             stay = 1;
     }
 
-    // 7. Jump Logic (If we are NOT staying, leave immediately)
+    // 7. Jump Logic
     if (!stay)
     {
-        // Cleanup LEDs
+        // Turn OFF LEDs
         GPIOD->BCR = (1 << 6);
         GPIOA->BCR = (1 << 2);
         GPIOC->BCR = (1 << 4);
-
         __disable_irq();
         RCC->APB1PCENR &= ~(RCC_APB1Periph_I2C1);
         asm volatile("csrw mtvec, %0" : : "r"(APP_START_ADDR | 1));
@@ -148,15 +159,15 @@ int main()
             ;
     }
 
-    // 8. Bootloader Loop (We are staying)
-    GPIOA->BSHR = (1 << 2); // PA2 ON
+    // 8. Bootloader Loop (PA2 ON)
+    GPIOA->BSHR = (1 << 2);
 
     while (1)
     {
         if (need_to_write)
         {
             need_to_write = 0;
-            GPIOC->BSHR = (1 << 4); // PC4 ON
+            GPIOC->BSHR = (1 << 4); // PC4 ON (Activity LED)
 
             uint8_t *data_ptr = (uint8_t *)&i2c_buffer[CMD_WRITE];
             uint8_t recv_sum = i2c_buffer[CMD_WRITE + PAGE_SIZE];
@@ -166,39 +177,21 @@ int main()
             for (int i = 0; i < PAGE_SIZE; i++)
                 calc_sum += data_ptr[i];
 
+            // SIMULATED WRITE LOGIC
             if (calc_sum == recv_sum)
             {
                 if (flash_pointer >= APP_START_ADDR)
                 {
-                    // INLINED FLASH WRITE
-                    if (FLASH->CTLR & FLASH_CTLR_LOCK)
-                    {
-                        FLASH->KEYR = 0x45670123;
-                        FLASH->KEYR = 0xCDEF89AB;
-                    }
+                    // --- FAKE WRITE ---
+                    // We simply advance the pointer and pretend we wrote it.
+                    // NO FLASH REGISTERS TOUCHED.
 
-                    // Erase
-                    FLASH->CTLR |= FLASH_CTLR_PER;
-                    FLASH->ADDR = flash_pointer;
-                    FLASH->CTLR |= FLASH_CTLR_STRT;
-                    while (FLASH->STATR & FLASH_STATR_BSY)
-                        ;
-                    FLASH->CTLR &= ~FLASH_CTLR_PER;
-
-                    // Program
-                    FLASH->CTLR |= FLASH_CTLR_PG;
-                    for (int i = 0; i < PAGE_SIZE; i += 2)
-                    {
-                        *(volatile uint16_t *)(flash_pointer + i) =
-                            data_ptr[i] | (data_ptr[i + 1] << 8);
-                        while (FLASH->STATR & FLASH_STATR_BSY)
-                            ;
-                    }
-                    FLASH->CTLR &= ~FLASH_CTLR_PG;
-                    FLASH->CTLR |= FLASH_CTLR_LOCK;
+                    // Artificial delay to simulate flash write time (~5ms)
+                    // 200,000 cycles approx 4ms
+                    simple_delay(200000);
 
                     flash_pointer += PAGE_SIZE;
-                    err_code = 0; // OK
+                    err_code = 0; // Success
                 }
                 else
                 {
@@ -210,10 +203,7 @@ int main()
                 err_code = 1;
             } // Checksum
 
-            // UPDATE STATUS DIRECTLY IN BUFFER
-            // Master will read this index (0x05) to check result
             i2c_buffer[CMD_CHECK_ERR] = err_code;
-
             GPIOC->BCR = (1 << 4); // PC4 OFF
         }
     }

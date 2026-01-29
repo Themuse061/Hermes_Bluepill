@@ -89,9 +89,9 @@
             ]
         },
         {
-            "label": "flash bootloader blinky test",
+            "label": "flash CH32V003_Blinky_With_I2C",
             "type": "shell",
-            "command": "platformio.exe run -d ${workspaceFolder}/Firmware/Ch32V003/ch32v003_bootloader_blinky_test --target upload --environment genericCH32V003F4P6",
+            "command": "platformio.exe run -d ${workspaceFolder}/Firmware/Ch32V003/CH32V003_Blinky_With_I2C --target upload --environment genericCH32V003F4P6",
             "args": [],
             "group": {
                 "kind": "build",

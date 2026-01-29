@@ -41,10 +41,6 @@ void onWrite(uint8_t reg, uint8_t length)
         // 1. Set Flag (Stay in Bootloader after reset)
         *BOOT_FLAG_ADDR = BOOT_MAGIC_VALUE;
 
-        // 2. Reset (Crucial! The bootloader only runs at startup)
-        NVIC_SystemReset();
-        while (1)
-            ; // Wait for death
         break;
 
     default:
@@ -74,8 +70,8 @@ int main()
     while (1)
     {
         // Blink logic
-        funDigitalWrite(PA2, 0);
-        funDigitalWrite(PD6, 0);
+        funDigitalWrite(PA2, 1);
+        funDigitalWrite(PD6, 1);
         funDigitalWrite(PC4, 1);
         Delay_Ms(100);
 

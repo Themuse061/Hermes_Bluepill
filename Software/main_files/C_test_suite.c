@@ -7,6 +7,7 @@
 #include "hermes_packet_sending.h"
 #include "C_test_suite_config.h"
 #include <conio.h>
+#include "Hera_Functions.h"
 
 // uint8_t data
 uint8_t ping_data[] = {0x09, 0x04, 0xFF, 0xaa, 0x00, 0x11, 0x00, 0xaa, 0xFF};
@@ -338,7 +339,23 @@ int main()
 		}
 	}
 
+	if (CH32V003_bootloader_testing)
+	{
+		// reset
+		Hera_I2C_Reset(Ch32V003_bootloader_testing_addr);
+
+		// jump to boot
+		Hera_I2C_jump_to_bootloader(Ch32V003_bootloader_testing_addr);
+
+		// reset
+		Hera_I2C_Reset(Ch32V003_bootloader_testing_boot_addr);
+
+		// reset
+		Hera_I2C_Reset(Ch32V003_bootloader_testing_addr);
+	}
+
 	//  Cleanup
+
 	printf("\n\n\n");
 	USB_deinit();
 	printf("\n--- Test Complete ---\n");
