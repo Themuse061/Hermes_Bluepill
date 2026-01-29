@@ -211,6 +211,14 @@ int main()
 		Stack_add_I2C_Write(Hot_plate_address, dummy3_data_write_1, sizeof(dummy3_data_write_1));
 		Stack_add_delay(50);
 		Hermes_Flush_Stack();
+
+		printf("\n");
+		printf("Dummy 1 Write 1: __ __ __ ");
+		print_array_in_hex(dummy1_data_write_1, sizeof(dummy1_data_write_1));
+		printf("Dummy 2 Write 1: __ __ __ ");
+		print_array_in_hex(dummy2_data_write_1, sizeof(dummy2_data_write_1));
+		printf("Dummy 3 Write 1: __ __ __ ");
+		print_array_in_hex(dummy3_data_write_1, sizeof(dummy3_data_write_1));
 		delay_ms(2000);
 
 		// Read first set of data
@@ -222,6 +230,13 @@ int main()
 
 		Stack_add_I2C_Send_recieve(Hot_plate_address, 1, dummy3_len, dummy3_ID_in_uint8);
 		Hermes_Flush_Stack_with_Read(dummy3_data_read1, sizeof(dummy3_data_read1));
+		printf("\n");
+		printf("Dummy 1 Read_ 1: ");
+		print_array_in_hex(dummy1_data_read1, sizeof(dummy1_data_read1));
+		printf("Dummy 2 Read_ 1: ");
+		print_array_in_hex(dummy2_data_read1, sizeof(dummy2_data_read1));
+		printf("Dummy 3 Read_ 1: ");
+		print_array_in_hex(dummy3_data_read1, sizeof(dummy3_data_read1));
 
 		// Write second set of data
 		Stack_add_I2C_Write(Hot_plate_address, dummy1_data_write_2, sizeof(dummy1_data_write_2));
@@ -231,6 +246,15 @@ int main()
 		Stack_add_I2C_Write(Hot_plate_address, dummy3_data_write_2, sizeof(dummy3_data_write_2));
 		Stack_add_delay(50);
 		Hermes_Flush_Stack();
+
+		printf("\n");
+		printf("Dummy 1 Write 2: __ __ __ ");
+		print_array_in_hex(dummy1_data_write_2, sizeof(dummy1_data_write_1));
+		printf("Dummy 2 Write 2: __ __ __ ");
+		print_array_in_hex(dummy2_data_write_2, sizeof(dummy2_data_write_2));
+		printf("Dummy 3 Write 2: __ __ __ ");
+		print_array_in_hex(dummy3_data_write_2, sizeof(dummy3_data_write_2));
+
 		delay_ms(2000);
 
 		// Read second set of data
@@ -243,34 +267,75 @@ int main()
 		Stack_add_I2C_Send_recieve(Hot_plate_address, 1, dummy3_len, dummy3_ID_in_uint8);
 		Hermes_Flush_Stack_with_Read(dummy3_data_read2, sizeof(dummy3_data_read2));
 
-		// Display results
-		printf("Dummy 1:\n");
-		printf("	write 1: __ __ __ ");
-		print_array_in_hex(dummy1_data_write_1, sizeof(dummy1_data_write_1));
-		printf("	read_ 1: ");
-		print_array_in_hex(dummy1_data_read1, sizeof(dummy1_data_read1));
-		printf("	write 2: __ __ __ ");
-		print_array_in_hex(dummy1_data_write_2, sizeof(dummy1_data_write_2));
-		printf("	read_ 2: ");
+		printf("\n");
+		printf("Dummy 1 Read_ 2: ");
 		print_array_in_hex(dummy1_data_read2, sizeof(dummy1_data_read2));
-		printf("Dummy 2:\n");
-		printf("	write 1: __ __ __ ");
-		print_array_in_hex(dummy2_data_write_1, sizeof(dummy2_data_write_1));
-		printf("	read_ 1: ");
-		print_array_in_hex(dummy2_data_read1, sizeof(dummy2_data_read1));
-		printf("	write 2: __ __ __ ");
-		print_array_in_hex(dummy2_data_write_2, sizeof(dummy2_data_write_2));
-		printf("	read_ 2: ");
+		printf("Dummy 2 Read_ 2: ");
 		print_array_in_hex(dummy2_data_read2, sizeof(dummy2_data_read2));
-		printf("Dummy 3:\n");
-		printf("	write 1: __ __ __ ");
-		print_array_in_hex(dummy3_data_write_1, sizeof(dummy3_data_write_1));
-		printf("	read_ 1: ");
-		print_array_in_hex(dummy3_data_read1, sizeof(dummy3_data_read1));
-		printf("	write 2: __ __ __ ");
-		print_array_in_hex(dummy3_data_write_2, sizeof(dummy3_data_write_2));
-		printf("	read_ 2: ");
+		printf("Dummy 2 Read_ 2: ");
 		print_array_in_hex(dummy3_data_read2, sizeof(dummy3_data_read2));
+
+		// check if everything is good
+		int current_loop_bad = 0;
+		printf("agrigated results:\n");
+
+		// FIX: Start loop at 1 to skip the Command ID byte check
+		for (int i = 1; i < 9; i++)
+		{
+			current_loop_bad = 0;
+			printf("Loop %i: ", i);
+
+			if (i <= dummy1_len)
+			{
+				if (dummy1_data_write_1[i] != dummy1_data_read1[i + 3])
+				{
+					current_loop_bad = 1;
+					printf("D1 W1; ");
+				}
+
+				if (dummy1_data_write_2[i] != dummy1_data_read2[i + 3])
+				{
+					current_loop_bad = 1;
+					printf("D1 W2; ");
+				}
+			}
+
+			if (i <= dummy2_len)
+			{
+				if (dummy2_data_write_1[i] != dummy2_data_read1[i + 3])
+				{
+					current_loop_bad = 1;
+					printf("D2 W1; ");
+				}
+
+				if (dummy2_data_write_2[i] != dummy2_data_read2[i + 3])
+				{
+					current_loop_bad = 1;
+					printf("D2 W2; ");
+				}
+			}
+			if (i <= dummy3_len)
+			{
+				if (dummy3_data_write_1[i] != dummy3_data_read1[i + 3])
+				{
+					current_loop_bad = 1;
+					printf("D3 W1; ");
+				}
+
+				if (dummy3_data_write_2[i] != dummy3_data_read2[i + 3])
+				{
+					current_loop_bad = 1;
+					printf("D3 W2; ");
+				}
+			}
+
+			if (!current_loop_bad)
+			{
+				printf("Everything good!");
+			}
+
+			printf("\n");
+		}
 	}
 
 	//  Cleanup
