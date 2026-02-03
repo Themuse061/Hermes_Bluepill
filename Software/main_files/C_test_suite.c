@@ -346,6 +346,7 @@ int main()
 
 		// jump to boot
 		Hera_I2C_jump_to_bootloader(Ch32V003_bootloader_testing_addr);
+		delay_ms(3000);
 
 		// reset
 		Hera_I2C_Reset(Ch32V003_bootloader_testing_boot_addr);
