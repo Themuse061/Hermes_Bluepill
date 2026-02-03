@@ -67,17 +67,42 @@ int main()
     funPinMode(PD6, GPIO_CFGLR_OUT_10Mhz_PP);
     funPinMode(PC4, GPIO_CFGLR_OUT_10Mhz_PP);
 
+    int count = 0;
     while (1)
     {
-        // Blink logic
-        funDigitalWrite(PA2, 1);
-        funDigitalWrite(PD6, 1);
-        funDigitalWrite(PC4, 1);
-        Delay_Ms(100);
+        count++;
+        if (count > 15)
+        {
+            count = 0;
+        }
 
-        funDigitalWrite(PA2, 0);
-        funDigitalWrite(PD6, 0);
-        funDigitalWrite(PC4, 0);
-        Delay_Ms(100);
+        // Blink logic
+        if (count % 2)
+        {
+            funDigitalWrite(PA2, 1);
+        }
+        else
+        {
+            funDigitalWrite(PA2, 0);
+        }
+
+        if (count % 4 >= 2)
+        {
+            funDigitalWrite(PD6, 1);
+        }
+        else
+        {
+            funDigitalWrite(PD6, 0);
+        }
+
+        if (count % 8 >= 4)
+        {
+            funDigitalWrite(PC4, 1);
+        }
+        else
+        {
+            funDigitalWrite(PC4, 0);
+        }
+        Delay_Ms(50);
     }
 }
