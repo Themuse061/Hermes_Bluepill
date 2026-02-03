@@ -6,7 +6,7 @@
     "configurations": [
         {
             "cwd": "${workspaceRoot}",
-            "executable": "STM32F103_Hermes/generated/constant_name_elf.elf",
+            "executable": "Firmware/STM32F103/STM32F103_Hermes/generated/constant_name_elf.elf",
             "name": "Debug STM32F103",
             "request": "launch",
             "type": "cortex-debug",
