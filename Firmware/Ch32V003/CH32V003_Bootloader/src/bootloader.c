@@ -7,12 +7,7 @@
 #define I2C_ADDR 0x48
 
 // Protocol Commands
-#define CMD_RESET 0x00
-#define CMD_JUMP_BOOT 0x01
-#define CMD_SET_PTR 0x02
-#define CMD_READ 0x03
-#define CMD_WRITE 0x04
-#define CMD_CHECK_ERR 0x05
+#include <Command_ID.h>
 
 // Memory
 #define APP_START_ADDR 0x00000800
@@ -51,17 +46,17 @@ void onWrite(uint8_t reg, uint8_t length)
 {
     switch (reg)
     {
-    case CMD_RESET:
+    case Command_ID_I2C_Slave_Reset_MCU:
         *BOOT_FLAG_ADDR = 0;
         raw_reset();
         break;
-    case CMD_JUMP_BOOT:
+    case Command_ID_I2C_Slave_Jump_To_Bootloader:
         *BOOT_FLAG_ADDR = BOOT_MAGIC_VALUE;
         break;
-    case CMD_SET_PTR:
+    case Command_ID_I2C_Slave_Flash_Set_Pointer:
         flash_pointer = 0x08000000 + (i2c_buffer[reg] | (i2c_buffer[reg + 1] << 8));
         break;
-    case CMD_READ:
+    case Command_ID_I2C_Slave_Flash_Read_Page:
     {
         // Read Simulation: Copy from Flash (safe to read)
         uint8_t *src = (uint8_t *)flash_pointer;
@@ -69,10 +64,10 @@ void onWrite(uint8_t reg, uint8_t length)
             i2c_buffer[reg + i] = src[i];
     }
     break;
-    case CMD_WRITE:
+    case Command_ID_I2C_Slave_Flash_Write_Page:
         need_to_write = 1;
         break;
-    case CMD_CHECK_ERR:
+    case Command_ID_I2C_Slave_Flash_Check_For_Error:
         break;
     }
 }
@@ -169,8 +164,8 @@ int main()
             need_to_write = 0;
             GPIOC->BSHR = (1 << 4); // PC4 ON (Activity LED)
 
-            uint8_t *data_ptr = (uint8_t *)&i2c_buffer[CMD_WRITE];
-            uint8_t recv_sum = i2c_buffer[CMD_WRITE + PAGE_SIZE];
+            uint8_t *data_ptr = (uint8_t *)&i2c_buffer[Command_ID_I2C_Slave_Flash_Write_Page];
+            uint8_t recv_sum = i2c_buffer[Command_ID_I2C_Slave_Flash_Write_Page + PAGE_SIZE];
             uint8_t calc_sum = 0;
             uint8_t err_code = 0;
 
@@ -203,7 +198,7 @@ int main()
                 err_code = 1;
             } // Checksum
 
-            i2c_buffer[CMD_CHECK_ERR] = err_code;
+            i2c_buffer[Command_ID_I2C_Slave_Flash_Check_For_Error] = err_code;
             GPIOC->BCR = (1 << 4); // PC4 OFF
         }
     }
