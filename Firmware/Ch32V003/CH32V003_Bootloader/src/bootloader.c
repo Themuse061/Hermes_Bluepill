@@ -11,14 +11,13 @@
 
 // Memory
 #define APP_START_ADDR 0x00000800
-#define PAGE_SIZE 64
 #define BUFFER_SIZE 255
 #define BOOT_FLAG_ADDR ((volatile uint32_t *)0x200007FC)
 #define BOOT_MAGIC_VALUE 0xBEEFCAFE
 
 // Globals
 volatile uint8_t i2c_buffer[BUFFER_SIZE];
-volatile uint32_t flash_pointer = APP_START_ADDR;
+volatile uint32_t flash_pointer = 0x08000000;
 volatile uint8_t need_to_write = 0;
 
 // ===================================================================================
@@ -39,6 +38,16 @@ void raw_reset()
         ;
 }
 
+uint8_t safe_flash_read()
+{
+    // CH32V003 Flash is 16KB: 0x08000000 to 0x08004000
+    if (flash_pointer >= 0x08000000 && flash_pointer < 0x08004000)
+    {
+        return *(uint8_t *)flash_pointer;
+    }
+    return 0xFF; // Return dummy data instead of crashing
+}
+
 // ===================================================================================
 // I2C CALLBACK
 // ===================================================================================
@@ -55,20 +64,23 @@ void onWrite(uint8_t reg, uint8_t length)
         *BOOT_FLAG_ADDR = BOOT_MAGIC_VALUE;
         break;
 
-    case Command_ID_I2C_Slave_Flash_Read_Page:
-        // 1. Reset Pointer
-        flash_pointer = 0x08000000;
-
-        // 2. [IMPORTANT] Pre-load the buffer!
-        // The Master is sitting at index 0x03. When it starts reading,
-        // it grabs i2c_buffer[0x03] immediately. We must fill it now.
-        i2c_buffer[reg] = *(uint8_t *)flash_pointer;
-
-        // 3. Increment pointer so the next byte (handled by onRead) is correct
-        flash_pointer++;
+    // Command 0x02: Set Pointer
+    case Command_ID_I2C_Slave_Flash_Set_Pointer:
+        // Packet: [0x02] [Low] [High]
+        // In ch32fun i2c_slave, buffer[reg] is the Low Byte.
+        {
+            uint16_t offset = i2c_buffer[reg] | (i2c_buffer[reg + 1] << 8);
+            flash_pointer = 0x08000000 + offset;
+        }
         break;
 
-    // Keeping this for later, but not using it for the read test
+    // Command 0x03: Prepare for Read
+    case Command_ID_I2C_Slave_Flash_Read_Page:
+        // PRE-LOAD FIX: Load the buffer immediately using the safe function.
+        // We do NOT increment the pointer here (onRead handles it).
+        i2c_buffer[reg] = safe_flash_read();
+        break;
+
     case Command_ID_I2C_Slave_Flash_Write_Page:
         need_to_write = 1;
         break;
@@ -77,13 +89,13 @@ void onWrite(uint8_t reg, uint8_t length)
 
 void onRead(uint8_t reg)
 {
-    // 1. Read NEXT byte
-    uint8_t data = *(uint8_t *)flash_pointer;
+    // 1. Read byte safely
+    uint8_t data = safe_flash_read();
 
-    // 2. Stuff it into the buffer at the requested register index
+    // 2. Put into buffer
     i2c_buffer[reg] = data;
 
-    // 3. Increment
+    // 3. Increment pointer for the NEXT read
     flash_pointer++;
 }
 
@@ -124,22 +136,6 @@ int main()
     // 6. Decision Logic
     uint8_t stay = 0;
 
-    // CHECK 1: Missing Application (Panic Mode)
-    // Note: If you have previously flashed the App, this will pass.
-    // If chip is empty, it will trigger Panic Blinks.
-    if (*(uint32_t *)APP_START_ADDR == 0xFFFFFFFF)
-    {
-        stay = 1;
-        // DIAGNOSTIC: PANIC PATTERN (3 Slow Blinks)
-        for (int i = 0; i < 3; i++)
-        {
-            GPIOD->BSHR = (1 << 6);
-            simple_delay(2000000);
-            GPIOD->BCR = (1 << 6);
-            simple_delay(2000000);
-        }
-    }
-
     // CHECK 2: Soft Reset Flag
     if (*BOOT_FLAG_ADDR == BOOT_MAGIC_VALUE)
         stay = 1;
@@ -174,47 +170,5 @@ int main()
 
     while (1)
     {
-        if (need_to_write)
-        {
-            need_to_write = 0;
-            GPIOC->BSHR = (1 << 4); // PC4 ON (Activity LED)
-
-            uint8_t *data_ptr = (uint8_t *)&i2c_buffer[Command_ID_I2C_Slave_Flash_Write_Page];
-            uint8_t recv_sum = i2c_buffer[Command_ID_I2C_Slave_Flash_Write_Page + PAGE_SIZE];
-            uint8_t calc_sum = 0;
-            uint8_t err_code = 0;
-
-            for (int i = 0; i < PAGE_SIZE; i++)
-                calc_sum += data_ptr[i];
-
-            // SIMULATED WRITE LOGIC
-            if (calc_sum == recv_sum)
-            {
-                if (flash_pointer >= APP_START_ADDR)
-                {
-                    // --- FAKE WRITE ---
-                    // We simply advance the pointer and pretend we wrote it.
-                    // NO FLASH REGISTERS TOUCHED.
-
-                    // Artificial delay to simulate flash write time (~5ms)
-                    // 200,000 cycles approx 4ms
-                    simple_delay(200000);
-
-                    flash_pointer += PAGE_SIZE;
-                    err_code = 0; // Success
-                }
-                else
-                {
-                    err_code = 2;
-                } // Protected
-            }
-            else
-            {
-                err_code = 1;
-            } // Checksum
-
-            i2c_buffer[Command_ID_I2C_Slave_Flash_Check_For_Error] = err_code;
-            GPIOC->BCR = (1 << 4); // PC4 OFF
-        }
     }
 }
