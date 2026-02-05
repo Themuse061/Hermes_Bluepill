@@ -362,12 +362,11 @@ int main()
 	Hera_I2C_Reset(Ch32V003_bootloader_testing_addr);
 	Hera_I2C_jump_to_bootloader(Ch32V003_bootloader_testing_addr);
 
+#define Page_read_size 16
 	uint8_t flash_read[128] = {0};
 	uint8_t set_flash_pointer_command[3];
-	uint8_t dummy_data_booty[] = {0x17};
+	uint8_t dummy_data_booty[] = {Command_ID_I2C_Slave_Flash_Read_Page, Page_read_size};
 	uint16_t Flash_poiter_offset;
-
-#define Page_read_size 16
 
 	for (int i = 0; i < 2000; i++)
 	{
@@ -382,7 +381,7 @@ int main()
 		Stack_add_I2C_Write(Ch32V003_bootloader_testing_addr, set_flash_pointer_command, sizeof(set_flash_pointer_command));
 
 		// Read the FLASH
-		Stack_add_I2C_Send_recieve(Ch32V003_bootloader_testing_addr, 1, Page_read_size, dummy_data_booty);
+		Stack_add_I2C_Send_recieve(Ch32V003_bootloader_testing_addr, sizeof(dummy_data_booty), Page_read_size, dummy_data_booty);
 
 		if (Hermes_Flush_Stack_with_Read(flash_read, Page_read_size + 4))
 		{

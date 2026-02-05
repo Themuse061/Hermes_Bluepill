@@ -74,32 +74,19 @@ void onWrite(uint8_t reg, uint8_t length)
         }
         break;
 
-    // Command 0x03: Prepare for Read
+    // preload a page into buffer
     case Command_ID_I2C_Slave_Flash_Read_Page:
-        // PRE-LOAD FIX: Load the buffer immediately using the safe function.
-        // We do NOT increment the pointer here (onRead handles it).
-        i2c_buffer[reg] = safe_flash_read();
-        break;
+        for (int i = 0; i < length; i++)
+        {
+            i2c_buffer[i + Command_ID_I2C_Slave_Flash_Read_Page] = safe_flash_read();
+            flash_pointer += 8;
+        }
 
-    case Command_ID_I2C_Slave_Flash_Write_Page:
-        need_to_write = 1;
         break;
 
     default:
         break;
     }
-}
-
-void onRead(uint8_t reg)
-{
-    // 1. Read byte safely
-    uint8_t data = safe_flash_read();
-
-    // 2. Put into buffer
-    i2c_buffer[reg] = data;
-
-    // 3. Increment pointer for the NEXT read
-    flash_pointer++;
 }
 
 // ===================================================================================
@@ -134,7 +121,7 @@ int main()
     }
 
     // 5. Init I2C
-    SetupI2CSlave(I2C_ADDR, i2c_buffer, sizeof(i2c_buffer), onWrite, onRead, false);
+    SetupI2CSlave(I2C_ADDR, i2c_buffer, sizeof(i2c_buffer), onWrite, NULL, false);
 
     // 6. Decision Logic
     uint8_t stay = 0;
