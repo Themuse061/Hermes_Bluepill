@@ -11,12 +11,12 @@
 
 // Memory
 #define APP_START_ADDR 0x00001800 // 6 KB bootloader
-#define BUFFER_SIZE 255
 #define BOOT_FLAG_ADDR ((volatile uint32_t *)0x200007FC)
 #define BOOT_MAGIC_VALUE 0xBEEFCAFE
+#define I2C_BUFFER_SIZE 255
 
 // Globals
-volatile uint8_t i2c_buffer[BUFFER_SIZE];
+volatile uint8_t i2c_buffer[I2C_BUFFER_SIZE];
 volatile uint32_t flash_pointer = 0x08000000;
 volatile uint8_t need_to_write = 0;
 
@@ -45,7 +45,7 @@ uint8_t safe_flash_read()
     {
         return *(uint8_t *)flash_pointer;
     }
-    return 0xFF; // Return dummy data instead of crashing
+    return 0xCA; // Return dummy data instead of crashing
 }
 
 // ===================================================================================
@@ -66,10 +66,10 @@ void onWrite(uint8_t reg, uint8_t length)
 
     // Command 0x02: Set Pointer
     case Command_ID_I2C_Slave_Flash_Set_Pointer:
-        // Packet: [0x02] [Low] [High]
-        // In ch32fun i2c_slave, buffer[reg] is the Low Byte.
+        if (length >= 2) // Ensure we actually got 2 bytes
         {
-            uint16_t offset = i2c_buffer[reg] | (i2c_buffer[reg + 1] << 8);
+            // Use index 0 and 1, NOT index 'reg'
+            uint16_t offset = i2c_buffer[0] | (i2c_buffer[1] << 8);
             flash_pointer = 0x08000000 + offset;
         }
         break;
@@ -83,6 +83,9 @@ void onWrite(uint8_t reg, uint8_t length)
 
     case Command_ID_I2C_Slave_Flash_Write_Page:
         need_to_write = 1;
+        break;
+
+    default:
         break;
     }
 }

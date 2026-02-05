@@ -8,6 +8,7 @@
 #include "C_test_suite_config.h"
 #include <conio.h>
 #include "Hera_Functions.h"
+#include <string.h>
 
 // uint8_t data
 uint8_t ping_data[] = {0x09, 0x04, 0xFF, 0xaa, 0x00, 0x11, 0x00, 0xaa, 0xFF};
@@ -355,64 +356,46 @@ int main()
 		Hera_I2C_Reset(Ch32V003_bootloader_testing_addr);
 	}
 
-	printf("\n\n=========== READING ENTIRE FLASH (16KB) ===========\n");
+	printf("\n\n=========== READING FLASH ===========\n");
 
 	// 1. Jump to Bootloader
+	Hera_I2C_Reset(Ch32V003_bootloader_testing_addr);
 	Hera_I2C_jump_to_bootloader(Ch32V003_bootloader_testing_addr);
 
-	printf("[-] Waiting for Bootloader to wake up...");
-	// Wait longer (1.5s) to ensure chip reset completes
-	delay_ms(1500);
+	uint8_t flash_read[128] = {0};
+	uint8_t set_flash_pointer_command[3];
+	uint8_t dummy_data_booty[] = {0x17};
+	uint16_t Flash_poiter_offset;
 
-	// 2. Set Pointer to Start (0x0000)
-	uint8_t ptr_cmd[] = {Command_ID_I2C_Slave_Flash_Set_Pointer, 0x00, 0x00};
-	Stack_add_I2C_Write(Ch32V003_bootloader_testing_addr, ptr_cmd, 3);
+#define Page_read_size 16
 
-	// 3. Connection Check / Flush
-	// If this fails, we won't even try to loop.
-	if (Hermes_Flush_Stack() < 0)
+	for (int i = 0; i < 2000; i++)
 	{
-		printf("\n[!] CRITICAL: Bootloader not responding (NACK). Unplug CH32V003 power and retry.\n");
-	}
-	else
-	{
-		printf(" OK!\n");
+		// Set flash pointer
+		Flash_poiter_offset = i * 16;
 
-// 4. Loop and Stream Read
-#define TOTAL_FLASH_SIZE 16384 // 16KB
-#define CHUNK_SIZE 64
+		// Little Endian: Low byte first, then High byte
+		set_flash_pointer_command[0] = Command_ID_I2C_Slave_Flash_Set_Pointer;		 // 0x02
+		set_flash_pointer_command[1] = (uint8_t)(Flash_poiter_offset & 0xFF);		 // Low
+		set_flash_pointer_command[2] = (uint8_t)((Flash_poiter_offset >> 8) & 0xFF); // High
 
-		uint8_t raw_buffer[CHUNK_SIZE + 10];
-		int current_addr = 0;
-		uint8_t read_header_cmd[] = {Command_ID_I2C_Slave_Flash_Read_Page};
-		int header_offset = 3;
+		Stack_add_I2C_Write(Ch32V003_bootloader_testing_addr, set_flash_pointer_command, sizeof(set_flash_pointer_command));
 
-		while (current_addr < TOTAL_FLASH_SIZE)
+		// Read the FLASH
+		Stack_add_I2C_Send_recieve(Ch32V003_bootloader_testing_addr, 1, Page_read_size, dummy_data_booty);
+
+		if (Hermes_Flush_Stack_with_Read(flash_read, Page_read_size + 4))
 		{
-			// Send [0x03] (Read Command) -> Slave Preloads Buffer -> We Read 64 bytes
-			Stack_add_I2C_Send_recieve(Ch32V003_bootloader_testing_addr, 1, CHUNK_SIZE, read_header_cmd);
-
-			// Execute
-			int len = Hermes_Flush_Stack_with_Read(raw_buffer, sizeof(raw_buffer));
-
-			if (len <= 0)
-			{
-				printf("\n[!] Error: Read failed at address %04X (I2C NACK)\n", current_addr);
-				break;
-			}
-
-			// Print Dump
-			for (int i = 0; i < CHUNK_SIZE; i++)
-			{
-				if ((current_addr + i) % 16 == 0)
-					printf("\n%04X: ", current_addr + i);
-				printf("%02X ", raw_buffer[header_offset + i]);
-			}
-
-			current_addr += CHUNK_SIZE;
+			memcpy(flash_read, &flash_read[4], Page_read_size);
+			printf("%08X:   ", i * 16);
+			print_array_in_hex(flash_read, Page_read_size);
 		}
+		else
+		{
+			printf("MEGA ERROR MY DUDE frfr\n");
+		}
+		delay_ms(500);
 	}
-	printf("\n\n=========== END OF FLASH ===========\n");
 
 	// Cleanup
 	printf("\n\n\n");
