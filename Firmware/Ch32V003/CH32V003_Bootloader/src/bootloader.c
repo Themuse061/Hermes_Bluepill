@@ -50,26 +50,41 @@ void onWrite(uint8_t reg, uint8_t length)
         *BOOT_FLAG_ADDR = 0;
         raw_reset();
         break;
+
     case Command_ID_I2C_Slave_Jump_To_Bootloader:
         *BOOT_FLAG_ADDR = BOOT_MAGIC_VALUE;
         break;
-    case Command_ID_I2C_Slave_Flash_Set_Pointer:
-        flash_pointer = 0x08000000 + (i2c_buffer[reg] | (i2c_buffer[reg + 1] << 8));
-        break;
+
     case Command_ID_I2C_Slave_Flash_Read_Page:
-    {
-        // Read Simulation: Copy from Flash (safe to read)
-        uint8_t *src = (uint8_t *)flash_pointer;
-        for (int i = 0; i < PAGE_SIZE; i++)
-            i2c_buffer[reg + i] = src[i];
-    }
-    break;
+        // 1. Reset Pointer
+        flash_pointer = 0x08000000;
+
+        // 2. [IMPORTANT] Pre-load the buffer!
+        // The Master is sitting at index 0x03. When it starts reading,
+        // it grabs i2c_buffer[0x03] immediately. We must fill it now.
+        i2c_buffer[reg] = *(uint8_t *)flash_pointer;
+
+        // 3. Increment pointer so the next byte (handled by onRead) is correct
+        flash_pointer++;
+        break;
+
+    // Keeping this for later, but not using it for the read test
     case Command_ID_I2C_Slave_Flash_Write_Page:
         need_to_write = 1;
         break;
-    case Command_ID_I2C_Slave_Flash_Check_For_Error:
-        break;
     }
+}
+
+void onRead(uint8_t reg)
+{
+    // 1. Read NEXT byte
+    uint8_t data = *(uint8_t *)flash_pointer;
+
+    // 2. Stuff it into the buffer at the requested register index
+    i2c_buffer[reg] = data;
+
+    // 3. Increment
+    flash_pointer++;
 }
 
 // ===================================================================================
@@ -104,7 +119,7 @@ int main()
     }
 
     // 5. Init I2C
-    SetupI2CSlave(I2C_ADDR, i2c_buffer, sizeof(i2c_buffer), onWrite, NULL, false);
+    SetupI2CSlave(I2C_ADDR, i2c_buffer, sizeof(i2c_buffer), onWrite, onRead, false);
 
     // 6. Decision Logic
     uint8_t stay = 0;
