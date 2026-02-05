@@ -10,7 +10,7 @@
 #include <Command_ID.h>
 
 // Memory
-#define APP_START_ADDR 0x00000800
+#define APP_START_ADDR 0x00001800 // 6 KB bootloader
 #define BUFFER_SIZE 255
 #define BOOT_FLAG_ADDR ((volatile uint32_t *)0x200007FC)
 #define BOOT_MAGIC_VALUE 0xBEEFCAFE

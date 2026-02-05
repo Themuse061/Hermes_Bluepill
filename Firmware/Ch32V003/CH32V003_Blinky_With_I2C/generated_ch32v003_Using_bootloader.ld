@@ -1,7 +1,7 @@
 ENTRY( InterruptVector )
 MEMORY
 {
- FLASH (rx) : ORIGIN = 0x00000800, LENGTH = 14336 /* 14k
+ FLASH (rx) : ORIGIN = 0x00001800, LENGTH = 0x2800 /* 10k
   /* RAM: Reduced size to reserve the end for the Flag */
     RAM (xrw)  : ORIGIN = 0x20000000, LENGTH = 2032
 }
