@@ -16,5 +16,6 @@
 #define Command_ID_USB_Device_Echo 0x03
 #define Command_ID_USB_Device_Ping 0x04
 #define Command_ID_USB_Device_Delay_Ms 0x05
+#define Command_ID_USB_Device_I2C_Read 0x06
 
 #define Command_ID_USB_Device_PC_Short_Data_Return 0xFF

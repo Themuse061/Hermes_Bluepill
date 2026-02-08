@@ -89,6 +89,10 @@ int main(void)
 					USB_command_handler_delay_ms(&USB_Commands[i][0]);
 					break;
 
+				case Command_ID_USB_Device_I2C_Read:
+					USB_Command_handler_I2C_Read(&USB_Commands[i][0]);
+					break;
+
 				default:
 					while (1)
 					{

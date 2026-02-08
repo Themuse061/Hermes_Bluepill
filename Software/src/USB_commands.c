@@ -85,3 +85,21 @@ int Stack_add_delay(int delay)
 
     return Hermes_Add_Command_To_Stack(packet, sizeof(packet));
 }
+
+int Stack_add_read(uint8_t addr, uint8_t len)
+{
+
+    uint8_t packet[] = {
+        4,                              // Total packet length
+        Command_ID_USB_Device_I2C_Read, // Command ID
+        addr,                           // addr
+        len,                            // len
+    };
+
+    if (USB_COMMANDS_VERBOSE_LEVEL > 1)
+    {
+        printf("LOG 2: Adding I2C Read to stack\n");
+    }
+
+    return Hermes_Add_Command_To_Stack(packet, sizeof(packet));
+}

@@ -21,6 +21,9 @@ void USB_command_handler_ping(uint8_t *command_array);
 #define Command_ID_USB_Device_Delay_Ms 0x05
 void USB_command_handler_delay_ms(uint8_t *command_array);
 
+#define Command_ID_USB_Device_I2C_Read 0x06
+void USB_Command_handler_I2C_Read(uint8_t *command_array);
+
 #define Command_ID_USB_Device_PC_Short_Data_Return 0xFF
 
 /*

@@ -132,6 +132,26 @@ void USB_command_handler_delay_ms(uint8_t *command_array)
 	delay_ms(delay_time);
 }
 
+void USB_Command_handler_I2C_Read(uint8_t *command_array)
+{
+	uint8_t address = command_array[2];
+	uint8_t read_length = command_array[3];
+
+	uint8_t read_data[USB_Command_data_size] = {0};
+
+	i2c_transfer7(I2C1, address, NULL, 0, read_data, read_length);
+
+	// Send USB_command_PC_short_data_return to PC
+	uint8_t USB_send_buffer[USB_Command_max_length] = {0};
+	USB_send_buffer[0] = read_length + 4; // Packet Length
+	USB_send_buffer[1] = Command_ID_USB_Device_PC_Short_Data_Return;
+	USB_send_buffer[2] = Command_ID_USB_Device_I2C_Read;
+	USB_send_buffer[3] = address;
+	memcpy(&USB_send_buffer[4], &read_data[0], read_length);
+
+	USB_send_data(USB_send_buffer, (uint16_t)USB_send_buffer[0]);
+}
+
 /*
 ========================================== uC -> PC COMMANDS ==========================================
 */
