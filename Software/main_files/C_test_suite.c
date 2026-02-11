@@ -485,20 +485,53 @@ int main()
 		}
 	}
 
-	if (CH32V003_bootloader_testing)
+	if (CH32V003_bootloader_jump_testing)
 	{
 		// reset
-		Hera_I2C_Reset(Ch32V003_bootloader_testing_addr);
+		Hera_I2C_Reset(Ch32V003_bootloader_jump_testing_addr);
 
 		// jump to boot
-		Hera_I2C_jump_to_bootloader(Ch32V003_bootloader_testing_addr);
+		Hera_I2C_jump_to_bootloader(Ch32V003_bootloader_jump_testing_addr);
 		delay_ms(3000);
 
 		// reset
-		Hera_I2C_Reset(Ch32V003_bootloader_testing_boot_addr);
+		Hera_I2C_Reset(Ch32V003_bootloader_jump_testing_boot_addr);
 
 		// reset
-		Hera_I2C_Reset(Ch32V003_bootloader_testing_addr);
+		Hera_I2C_Reset(Ch32V003_bootloader_jump_testing_addr);
+	}
+
+	if (CH32V003_bootloader_get_version_testing)
+	{
+		printf("\n\n=========== Testing CH32V003 Bootloader get version  ===========\n");
+
+		Hera_I2C_jump_to_bootloader(CH32V003_bootloader_get_version_testing_addr);
+
+		uint8_t bootloader_get_version_send_recieve_packet[] = {Command_ID_I2C_Slave_Flash_Get_Version};
+		uint8_t bootloader_get_version_send_recieve_buffer[64];
+
+		uint8_t bootloader_get_version_write[] = {Command_ID_I2C_Slave_Flash_Get_Version};
+
+		printf("---- With write/read ----\n");
+		Stack_add_I2C_Write(CH32V003_bootloader_get_version_testing_addr, bootloader_get_version_write, 1);
+		Hermes_Flush_Stack();
+		delay_ms(5000);
+
+		Hera_I2C_jump_to_bootloader(CH32V003_bootloader_get_version_testing_addr);
+
+		Stack_add_I2C_Send_recieve(CH32V003_bootloader_get_version_testing_addr, 1, 4 + 1, bootloader_get_version_send_recieve_packet);
+		Hermes_Flush_Stack_with_Read(bootloader_get_version_send_recieve_buffer, sizeof(bootloader_get_version_send_recieve_buffer));
+		print_array_in_hex(bootloader_get_version_send_recieve_buffer, bootloader_get_version_send_recieve_buffer[0]);
+
+		delay_ms(1000);
+
+		Stack_add_I2C_Send_recieve(CH32V003_bootloader_get_version_testing_addr, 1, 4 + 1, bootloader_get_version_send_recieve_packet);
+		Hermes_Flush_Stack_with_Read(bootloader_get_version_send_recieve_buffer, sizeof(bootloader_get_version_send_recieve_buffer));
+		print_array_in_hex(bootloader_get_version_send_recieve_buffer, bootloader_get_version_send_recieve_buffer[0]);
+
+		delay_ms(1000);
+
+		Hera_I2C_Reset(CH32V003_bootloader_get_version_testing_addr);
 	}
 
 	if (CH32V003_FLASH_read_testing)
@@ -506,35 +539,41 @@ int main()
 		printf("\n\n=========== Testing CH32V003 Bootloader Flash Reading ===========\n");
 
 		// 1. Jump to Bootloader
-		Hera_I2C_Reset(Ch32V003_bootloader_testing_addr);
-		Hera_I2C_jump_to_bootloader(Ch32V003_bootloader_testing_addr);
+		Hera_I2C_Reset(Ch32V003_bootloader_jump_testing_addr);
+		Hera_I2C_jump_to_bootloader(Ch32V003_bootloader_jump_testing_addr);
 
-#define Page_read_size 16
 		uint8_t flash_read[128] = {0};
 		uint8_t set_flash_pointer_command[3];
-		uint8_t dummy_data_booty[] = {Command_ID_I2C_Slave_Flash_Read_Page, Page_read_size};
+		uint8_t read_flash_command[2];
+
 		uint16_t Flash_poiter_offset;
 
-		for (int i = 0; i < 2000; i++)
+		for (int i = 0; i < 256; i++)
 		{
 			// Set flash pointer
-			Flash_poiter_offset = i * 16;
+			Flash_poiter_offset = i * FLASH_READ_SIZE + Flash_Start;
 
 			// Little Endian: Low byte first, then High byte
 			set_flash_pointer_command[0] = Command_ID_I2C_Slave_Flash_Set_Pointer;		 // 0x02
 			set_flash_pointer_command[1] = (uint8_t)(Flash_poiter_offset & 0xFF);		 // Low
 			set_flash_pointer_command[2] = (uint8_t)((Flash_poiter_offset >> 8) & 0xFF); // High
 
-			Stack_add_I2C_Write(Ch32V003_bootloader_testing_addr, set_flash_pointer_command, sizeof(set_flash_pointer_command));
+			Stack_add_I2C_Write(Ch32V003_bootloader_jump_testing_addr, set_flash_pointer_command, sizeof(set_flash_pointer_command));
+
+			// Ask MCU to Write Data To Buffer
+			read_flash_command[0] = Command_ID_I2C_Slave_Flash_Read_Page; // 0
+			read_flash_command[1] = FLASH_READ_SIZE;					  //
+			Stack_add_I2C_Write(Ch32V003_bootloader_jump_testing_addr, read_flash_command, sizeof(read_flash_command));
+			delay_ms(10);
 
 			// Read the FLASH
-			Stack_add_I2C_Send_recieve(Ch32V003_bootloader_testing_addr, sizeof(dummy_data_booty), Page_read_size, dummy_data_booty);
+			Stack_add_read(Ch32V003_bootloader_jump_testing_addr, FLASH_READ_SIZE);
 
-			if (Hermes_Flush_Stack_with_Read(flash_read, Page_read_size + 4))
+			if (Hermes_Flush_Stack_with_Read(flash_read, FLASH_READ_SIZE + 4))
 			{
-				memcpy(flash_read, &flash_read[4], Page_read_size);
+				memcpy(flash_read, &flash_read[4], FLASH_READ_SIZE);
 				printf("%08X:   ", i * 16);
-				print_array_in_hex(flash_read, Page_read_size);
+				print_array_in_hex(flash_read, FLASH_READ_SIZE);
 			}
 			else
 			{

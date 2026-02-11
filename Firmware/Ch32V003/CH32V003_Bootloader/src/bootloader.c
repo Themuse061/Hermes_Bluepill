@@ -1,24 +1,55 @@
+
+
+// ===================================================================================
+// CH32v003 J4M6 PINOUT
+// ===================================================================================
+/*
+Pin 1 PD6
+Pin 2           GND
+Pin 3 PA2
+Pin 4           VCC
+Pin 5
+Pin 6           SCL
+Pin 7 PC4
+Pin 8           PD1 SWIO
+*/
+
 #include "ch32fun.h"
+#include "ch32v003hw.h"
 #include "i2c_slave.h"
 
 // ===================================================================================
 // CONFIGURATION
 // ===================================================================================
-#define I2C_ADDR 0x48
 
 // Protocol Commands
 #include <Command_ID.h>
 
 // Memory
-#define APP_START_ADDR 0x00001800 // 6 KB bootloader
 #define BOOT_FLAG_ADDR ((volatile uint32_t *)0x200007FC)
 #define BOOT_MAGIC_VALUE 0xBEEFCAFE
+
+// Flash Defines
+// CH32V003 Flash is 16KB: 0x08000000 to 0x08004000
+#define FLASH_START 0x08000000
+#define FLASH_END 0x08004000
+#define APP_START_ADDR 0x00001800 // 6 KB bootloader
+#define FLASH_PAGE_SIZE 64
+#define FLASH_PAGE_AMOUNT 256
+
+// I2C Defines
 #define I2C_BUFFER_SIZE 255
+#define I2C_ADDR 0x48
 
 // Globals
 volatile uint8_t i2c_buffer[I2C_BUFFER_SIZE];
 volatile uint32_t flash_pointer = 0x08000000;
 volatile uint8_t need_to_write = 0;
+uint8_t bootloader_version = 1;
+
+volatile bool master_sent_Flash_Read_Page;
+volatile bool master_sent_Flash_Write_Page;
+volatile bool master_sent_Flash_Get_Version;
 
 // ===================================================================================
 // UTILS
@@ -40,12 +71,26 @@ void raw_reset()
 
 uint8_t safe_flash_read()
 {
-    // CH32V003 Flash is 16KB: 0x08000000 to 0x08004000
-    if (flash_pointer >= 0x08000000 && flash_pointer < 0x08004000)
+
+    if (flash_pointer >= FLASH_START && flash_pointer < FLASH_END)
     {
         return *(uint8_t *)flash_pointer;
     }
     return 0xCA; // Return dummy data instead of crashing
+}
+
+void Enable_I2C(bool state)
+{
+    if (state)
+    {
+        I2C1->CTLR1 |= I2C_CTLR1_ACK;
+        funDigitalWrite(PA2, FUN_LOW);
+    }
+    else
+    {
+        I2C1->CTLR1 &= ~I2C_CTLR1_ACK;
+        funDigitalWrite(PA2, FUN_HIGH);
+    }
 }
 
 // ===================================================================================
@@ -53,6 +98,7 @@ uint8_t safe_flash_read()
 // ===================================================================================
 void onWrite(uint8_t reg, uint8_t length)
 {
+
     switch (reg)
     {
     case Command_ID_I2C_Slave_Reset_MCU:
@@ -62,6 +108,7 @@ void onWrite(uint8_t reg, uint8_t length)
 
     case Command_ID_I2C_Slave_Jump_To_Bootloader:
         *BOOT_FLAG_ADDR = BOOT_MAGIC_VALUE;
+
         break;
 
     // Command 0x02: Set Pointer
@@ -69,19 +116,14 @@ void onWrite(uint8_t reg, uint8_t length)
         if (length >= 2) // Ensure we actually got 2 bytes
         {
             // Use index 0 and 1, NOT index 'reg'
-            uint16_t offset = i2c_buffer[0] | (i2c_buffer[1] << 8);
+            uint16_t offset = i2c_buffer[Command_ID_I2C_Slave_Flash_Set_Pointer] | (i2c_buffer[Command_ID_I2C_Slave_Flash_Set_Pointer + 1] << 8);
             flash_pointer = 0x08000000 + offset;
         }
         break;
 
-    // preload a page into buffer
-    case Command_ID_I2C_Slave_Flash_Read_Page:
-        for (int i = 0; i < length; i++)
-        {
-            i2c_buffer[i + Command_ID_I2C_Slave_Flash_Read_Page] = safe_flash_read();
-            flash_pointer += 8;
-        }
-
+    case Command_ID_I2C_Slave_Flash_Get_Version:
+        Enable_I2C(0);
+        master_sent_Flash_Get_Version = 1;
         break;
 
     default:
@@ -90,40 +132,12 @@ void onWrite(uint8_t reg, uint8_t length)
 }
 
 // ===================================================================================
-// MAIN
+// Check for jump
 // ===================================================================================
-int main()
+
+void check_for_jump_to_main()
 {
-    SystemInit();
 
-    // 1. Enable Clocks (A, C, D)
-    RCC->APB2PCENR |= RCC_APB2Periph_GPIOA | RCC_APB2Periph_GPIOC | RCC_APB2Periph_GPIOD;
-
-    // 2. Configure LEDs
-    GPIOD->CFGLR &= ~(0xF << 24);
-    GPIOD->CFGLR |= (0x1 << 24); // PD6
-    GPIOA->CFGLR &= ~(0xF << 8);
-    GPIOA->CFGLR |= (0x1 << 8); // PA2
-    GPIOC->CFGLR &= ~(0xF << 16);
-    GPIOC->CFGLR |= (0x1 << 16); // PC4
-
-    // 3. Configure I2C Pins (PC1, PC2) -> AF Open Drain
-    GPIOC->CFGLR &= ~(0xFF << 4);
-    GPIOC->CFGLR |= (0xDD << 4);
-
-    // 4. DIAGNOSTIC: STARTUP PATTERN (5 Rapid Blinks)
-    for (int i = 0; i < 5; i++)
-    {
-        GPIOD->BSHR = (1 << 6);
-        simple_delay(100000);
-        GPIOD->BCR = (1 << 6);
-        simple_delay(200000);
-    }
-
-    // 5. Init I2C
-    SetupI2CSlave(I2C_ADDR, i2c_buffer, sizeof(i2c_buffer), onWrite, NULL, false);
-
-    // 6. Decision Logic
     uint8_t stay = 0;
 
     // CHECK 2: Soft Reset Flag
@@ -143,9 +157,9 @@ int main()
     if (!stay)
     {
         // Turn OFF LEDs
-        GPIOD->BCR = (1 << 6);
-        GPIOA->BCR = (1 << 2);
-        GPIOC->BCR = (1 << 4);
+        funDigitalWrite(PD6, FUN_LOW);
+        funDigitalWrite(PA2, FUN_LOW);
+        funDigitalWrite(PC4, FUN_LOW);
         __disable_irq();
         RCC->APB1PCENR &= ~(RCC_APB1Periph_I2C1);
         asm volatile("csrw mtvec, %0" : : "r"(APP_START_ADDR | 1));
@@ -154,11 +168,78 @@ int main()
         while (1)
             ;
     }
+}
 
-    // 8. Bootloader Loop (PA2 ON)
-    GPIOA->BSHR = (1 << 2);
+// ===================================================================================
+// MAIN
+// ===================================================================================
+int main()
+{
+
+    SystemInit();
+    funGpioInitAll();
+
+    // 1. Enable Clocks (A, C, D)
+    RCC->APB2PCENR |= RCC_APB2Periph_GPIOA | RCC_APB2Periph_GPIOC | RCC_APB2Periph_GPIOD;
+    funPinMode(PD6, GPIO_CFGLR_OUT_10Mhz_PP);
+    funPinMode(PA2, GPIO_CFGLR_OUT_10Mhz_PP);
+    funPinMode(PC4, GPIO_CFGLR_OUT_10Mhz_PP);
+
+    // 3. Configure I2C Pins (PC1, PC2) -> AF Open Drain
+    GPIOC->CFGLR &= ~(0xFF << 4);
+    GPIOC->CFGLR |= (0xDD << 4);
+
+    // 4. DIAGNOSTIC: STARTUP PATTERN (5 Rapid Blinks)
+    for (int i = 0; i < 5; i++)
+    {
+        funDigitalWrite(PD6, FUN_HIGH);
+        simple_delay(100000);
+        funDigitalWrite(PD6, FUN_LOW);
+        simple_delay(200000);
+    }
+
+    // 5. Init I2C
+    SetupI2CSlave(I2C_ADDR, i2c_buffer, sizeof(i2c_buffer), onWrite, NULL, false);
+
+    // 6. Decision Logic
+    check_for_jump_to_main();
+
+    // load dummy data to i2c
+    for (int i = 0; i < I2C_BUFFER_SIZE; i++)
+    {
+        i2c_buffer[i] = i;
+    }
+
+    funDigitalWrite(PD6, FUN_HIGH);
 
     while (1)
     {
+
+        if (master_sent_Flash_Read_Page)
+        {
+            // Take Flash and put it into Buffer
+            int amount_to_read = i2c_buffer[Command_ID_I2C_Slave_Flash_Read_Page + 1];
+
+            for (int i = 0; i < amount_to_read; i++)
+            {
+                i2c_buffer[Command_ID_I2C_Slave_Flash_Read_Page + i] = safe_flash_read();
+                flash_pointer++;
+            }
+
+            master_sent_Flash_Read_Page = 0;
+            Enable_I2C(1);
+        }
+
+        if (master_sent_Flash_Write_Page)
+        { // Flash the flash
+        }
+
+        if (master_sent_Flash_Get_Version)
+        {
+            i2c_buffer[0x16] = 0xCC;
+            i2c_buffer[0x16 + 1] = 0xCD; // FOR SOME REASON IT DOESN'T WORK
+            master_sent_Flash_Get_Version = 0;
+            Enable_I2C(1);
+        }
     }
 }

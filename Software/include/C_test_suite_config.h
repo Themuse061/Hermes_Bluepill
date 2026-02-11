@@ -17,8 +17,8 @@
 #define TCA9554_REG_OUTPUT 0x01
 #define TCA9554_REG_CONFIG 0x03
 
-#define Test_hot_plate_send_recieve 1
-#define Test_hot_plate_send_and_read 1
+#define Test_hot_plate_send_recieve 0
+#define Test_hot_plate_send_and_read 0
 #define Hot_plate_address 0x28
 #define dummy1_ID 0x03
 #define dummy2_ID 0x04
@@ -27,12 +27,16 @@
 #define dummy2_len 8
 #define dummy3_len 3
 
-#define CH32V003_bootloader_testing 0
-#define Ch32V003_bootloader_testing_addr 0x48
-#define Ch32V003_bootloader_testing_boot_addr 0x48
+#define CH32V003_bootloader_jump_testing 0
+#define Ch32V003_bootloader_jump_testing_addr 0x48
+#define Ch32V003_bootloader_jump_testing_boot_addr 0x48
+
+#define CH32V003_bootloader_get_version_testing 1
+#define CH32V003_bootloader_get_version_testing_addr 0x48
+
+#define FLASH_READ_SIZE 64
+#define FLASH_PAGE_AMOUNT 256
+#define Flash_Start 0x08000000
 
 #define CH32V003_FLASH_read_testing 0
 #define CH32V003_FLASH_read_testing_addr 0x48
-
-#define CH32V003_gpio_expander_is_conected 0
-#define CH32V003_gpio_expander_address 0x09
