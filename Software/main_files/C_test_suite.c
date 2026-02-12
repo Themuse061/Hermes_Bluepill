@@ -512,25 +512,13 @@ int main()
 
 		uint8_t bootloader_get_version_write[] = {Command_ID_I2C_Slave_Flash_Get_Version};
 
-		printf("---- With write/read ----\n");
 		Stack_add_I2C_Write(CH32V003_bootloader_get_version_testing_addr, bootloader_get_version_write, 1);
 		Hermes_Flush_Stack();
-		delay_ms(5000);
+		delay_ms(2000);
 
-		Hera_I2C_jump_to_bootloader(CH32V003_bootloader_get_version_testing_addr);
-
-		Stack_add_I2C_Send_recieve(CH32V003_bootloader_get_version_testing_addr, 1, 4 + 1, bootloader_get_version_send_recieve_packet);
+		Stack_add_I2C_Send_recieve(CH32V003_bootloader_get_version_testing_addr, 1, 4, bootloader_get_version_send_recieve_packet);
 		Hermes_Flush_Stack_with_Read(bootloader_get_version_send_recieve_buffer, sizeof(bootloader_get_version_send_recieve_buffer));
-		print_array_in_hex(bootloader_get_version_send_recieve_buffer, bootloader_get_version_send_recieve_buffer[0]);
-
-		delay_ms(1000);
-
-		Stack_add_I2C_Send_recieve(CH32V003_bootloader_get_version_testing_addr, 1, 4 + 1, bootloader_get_version_send_recieve_packet);
-		Hermes_Flush_Stack_with_Read(bootloader_get_version_send_recieve_buffer, sizeof(bootloader_get_version_send_recieve_buffer));
-		print_array_in_hex(bootloader_get_version_send_recieve_buffer, bootloader_get_version_send_recieve_buffer[0]);
-
-		delay_ms(1000);
-
+		print_array_in_hex(&bootloader_get_version_send_recieve_buffer[4], 4);
 		Hera_I2C_Reset(CH32V003_bootloader_get_version_testing_addr);
 	}
 

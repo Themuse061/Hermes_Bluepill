@@ -8,6 +8,7 @@ int Hera_I2C_Reset(uint8_t addr)
 {
 	uint8_t command_reset[] = {Command_ID_I2C_Slave_Reset_MCU};
 	Stack_add_I2C_Write(addr, command_reset, 1);
+	delay_ms(200);
 	Hermes_Flush_Stack();
 	delay_ms(2000);
 	return 1;

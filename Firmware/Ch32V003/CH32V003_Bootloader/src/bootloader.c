@@ -45,7 +45,7 @@ Pin 8           PD1 SWIO
 volatile uint8_t i2c_buffer[I2C_BUFFER_SIZE];
 volatile uint32_t flash_pointer = 0x08000000;
 volatile uint8_t need_to_write = 0;
-uint8_t bootloader_version = 1;
+uint8_t bootloader_version[] = {0x01, 0x00, 0x01, 0x01};
 
 volatile bool master_sent_Flash_Read_Page;
 volatile bool master_sent_Flash_Write_Page;
@@ -236,8 +236,11 @@ int main()
 
         if (master_sent_Flash_Get_Version)
         {
-            i2c_buffer[0x16] = 0xCC;
-            i2c_buffer[0x16 + 1] = 0xCD; // FOR SOME REASON IT DOESN'T WORK
+            for (int i = 0; i < 4; i++)
+            {
+                i2c_buffer[0x16 + i] = bootloader_version[i];
+            }
+
             master_sent_Flash_Get_Version = 0;
             Enable_I2C(1);
         }
