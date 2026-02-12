@@ -31,12 +31,12 @@
 #define Ch32V003_bootloader_jump_testing_addr 0x48
 #define Ch32V003_bootloader_jump_testing_boot_addr 0x48
 
-#define CH32V003_bootloader_get_version_testing 1
+#define CH32V003_bootloader_get_version_testing 0
 #define CH32V003_bootloader_get_version_testing_addr 0x48
 
 #define FLASH_READ_SIZE 64
 #define FLASH_PAGE_AMOUNT 256
 #define Flash_Start 0x08000000
 
-#define CH32V003_FLASH_read_testing 0
+#define CH32V003_FLASH_read_testing 1
 #define CH32V003_FLASH_read_testing_addr 0x48

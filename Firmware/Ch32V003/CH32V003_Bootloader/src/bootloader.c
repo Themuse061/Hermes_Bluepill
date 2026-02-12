@@ -115,15 +115,23 @@ void onWrite(uint8_t reg, uint8_t length)
     case Command_ID_I2C_Slave_Flash_Set_Pointer:
         if (length >= 2) // Ensure we actually got 2 bytes
         {
-            // Use index 0 and 1, NOT index 'reg'
-            uint16_t offset = i2c_buffer[Command_ID_I2C_Slave_Flash_Set_Pointer] | (i2c_buffer[Command_ID_I2C_Slave_Flash_Set_Pointer + 1] << 8);
-            flash_pointer = 0x08000000 + offset;
+            // lower byte in [0], higher in [4]
+            flash_pointer = 0;
+            flash_pointer |= (i2c_buffer[Command_ID_I2C_Slave_Flash_Set_Pointer + 0]) << 0; // low byte first
+            flash_pointer |= (i2c_buffer[Command_ID_I2C_Slave_Flash_Set_Pointer + 1]) << 8;
+            flash_pointer |= (i2c_buffer[Command_ID_I2C_Slave_Flash_Set_Pointer + 2]) << 16;
+            flash_pointer |= (i2c_buffer[Command_ID_I2C_Slave_Flash_Set_Pointer + 3]) << 24;
         }
         break;
 
     case Command_ID_I2C_Slave_Flash_Get_Version:
         Enable_I2C(0);
         master_sent_Flash_Get_Version = 1;
+        break;
+
+    case Command_ID_I2C_Slave_Flash_Read_Page:
+        Enable_I2C(0);
+        master_sent_Flash_Read_Page = 1;
         break;
 
     default:
@@ -217,14 +225,11 @@ int main()
 
         if (master_sent_Flash_Read_Page)
         {
-            // Take Flash and put it into Buffer
-            int amount_to_read = i2c_buffer[Command_ID_I2C_Slave_Flash_Read_Page + 1];
-
-            for (int i = 0; i < amount_to_read; i++)
-            {
-                i2c_buffer[Command_ID_I2C_Slave_Flash_Read_Page + i] = safe_flash_read();
-                flash_pointer++;
-            }
+            // Put flash pointer into buffer for debbuging
+            i2c_buffer[Command_ID_I2C_Slave_Flash_Read_Page + 0] = ((flash_pointer) & 0xff); // low byte
+            i2c_buffer[Command_ID_I2C_Slave_Flash_Read_Page + 1] = (flash_pointer >> 8) & 0xFF;
+            i2c_buffer[Command_ID_I2C_Slave_Flash_Read_Page + 2] = (flash_pointer >> 16) & 0xFF;
+            i2c_buffer[Command_ID_I2C_Slave_Flash_Read_Page + 3] = (flash_pointer >> 24) & 0xFF; // high byte
 
             master_sent_Flash_Read_Page = 0;
             Enable_I2C(1);
