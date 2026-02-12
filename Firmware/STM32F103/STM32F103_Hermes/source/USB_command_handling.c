@@ -8,6 +8,7 @@
 #include <libopencm3/stm32/i2c.h>
 #include <TCA9554.h>
 #include <string.h>
+#include <debug_leds.h>
 
 /**
  * COMMAND 0x01 USB_command_handler_I2C_write
@@ -26,7 +27,9 @@ void USB_command_handler_I2C_write(uint8_t *command_array)
 	uint8_t data_length = command_array[USB_Command_Byte_Length];
 	data_length -= 3;
 
+	debug_led_i2c_busy(1);
 	i2c_transfer7(I2C1, address, data_start, data_length, 0, 0);
+	debug_led_i2c_busy(0);
 }
 /*
 TCA write
@@ -71,7 +74,9 @@ void USB_command_handler_I2C_send_recieve(uint8_t *command_array)
 
 	uint8_t read_data[USB_Command_data_size] = {0};
 
+	debug_led_i2c_busy(1);
 	i2c_transfer7(I2C1, address, write_data, write_length, read_data, read_length);
+	debug_led_i2c_busy(0);
 
 	// Send USB_command_PC_short_data_return to PC
 	uint8_t USB_send_buffer[USB_Command_max_length] = {0};
@@ -139,7 +144,9 @@ void USB_Command_handler_I2C_Read(uint8_t *command_array)
 
 	uint8_t read_data[USB_Command_data_size] = {0};
 
+	debug_led_i2c_busy(1);
 	i2c_transfer7(I2C1, address, NULL, 0, read_data, read_length);
+	debug_led_i2c_busy(0);
 
 	// Send USB_command_PC_short_data_return to PC
 	uint8_t USB_send_buffer[USB_Command_max_length] = {0};

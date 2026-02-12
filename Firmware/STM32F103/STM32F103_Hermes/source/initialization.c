@@ -6,6 +6,7 @@
 #include <libopencm3/stm32/adc.h>
 #include <libopencm3/stm32/i2c.h>
 #include <libopencm3/stm32/usart.h>
+#include "pinout.h"
 
 #include "usb_handling.h"
 
@@ -39,9 +40,9 @@ void initialize_RCC()
 void initialize_GPIO()
 {
 	gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_2_MHZ,
-				  GPIO_CNF_OUTPUT_PUSHPULL, 0b11111111);
+				  GPIO_CNF_OUTPUT_PUSHPULL, 0b11111111); // Red leds
 	gpio_set_mode(GPIOB, GPIO_MODE_OUTPUT_2_MHZ,
-				  GPIO_CNF_OUTPUT_PUSHPULL, GPIO0 | GPIO1 | GPIO10 | GPIO11);
+				  GPIO_CNF_OUTPUT_PUSHPULL, LED_green_1_pin | LED_green_2_pin | LED_yellow_1_pin | LED_yellow_2_pin);
 }
 
 void initialize_I2C()

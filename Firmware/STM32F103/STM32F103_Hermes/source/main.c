@@ -18,6 +18,7 @@
 #include <libopencm3/stm32/i2c.h>
 #include <TCA9554.h>
 #include <string.h>
+#include "debug_leds.h"
 
 void *memcpy(void *dest, const void *src, size_t n)
 {
@@ -54,7 +55,11 @@ int main(void)
 	tca9554_led_write(E2, 1);
 
 	write_ladder_red(0);
-	gpio_clear(GPIOB, GPIO0 | GPIO1 | GPIO10 | GPIO11);
+	debug_led_usb_busy(0);
+	debug_led_i2c_busy(0);
+	debug_led_parsing_usb_command(0);
+
+	// main loop
 	while (1)
 	{
 		delay_ms(800);
@@ -63,6 +68,7 @@ int main(void)
 		write_ladder_red(1);
 		if (USB_data_recieved == 1)
 		{
+			debug_led_parsing_usb_command(1);
 
 			// Execute the commands
 			for (int i = 0; i < 16 && USB_Commands[i][USB_Command_Byte_Length] != 0; i++)
@@ -106,6 +112,7 @@ int main(void)
 				USB_Commands[i][USB_Command_Byte_Length] = 0;
 			}
 			USB_data_recieved = 0;
+			debug_led_parsing_usb_command(0);
 		}
 		else if (USB_data_recieved)
 		{
@@ -116,9 +123,8 @@ int main(void)
 
 void USB_recieve_interrupt()
 {
-	write_ladder_red(2);
+	debug_led_usb_busy(1);
 	int len = USB_read_data(buf, 256);
-	write_ladder_red(4);
 
 	if (len) // If any data was read
 	{
@@ -147,29 +153,5 @@ void USB_recieve_interrupt()
 		}
 		USB_data_recieved++; // execute the commands in main
 	}
+	debug_led_usb_busy(0);
 }
-
-/*
-USB Packet
-all uint8_t
-
-USB -> uC
-1. Length
-2. Command type
-3. Data
-
-uC -> USB
-
-*/
-
-/*
-commands
-
-0x01 -> I2C write
-	First byte - addr Xaaaaaaa
-	rest (up to end of length) - data
-
-0x02 -> I2C read register
-
-
-*/

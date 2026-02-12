@@ -4,8 +4,9 @@
 #include "Usb_driver.h"
 #include "Command_ID.h"
 #include "hermes_packet_sending.h"
+#include "verbosity_settings.h"
 
-#define HERMES_VERBOSE_LEVEL 2 // 0 for quiet, 1 for normal, 2 for verbose
+
 #define HERMES_MAX_TIMEOUT 5000
 
 #define HERMES_MAX_STACK_HEIGHT 16

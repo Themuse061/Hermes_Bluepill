@@ -6,7 +6,8 @@
                 "${workspaceFolder}/../_Cerys_Modules/libopencm3/include",
                 "${workspaceFolder}/../_Cerys_Modules/ch32fun/ch32fun",
                 "${workspaceFolder}/Software/include/*",
-                "${workspaceFolder}/Universal_includes/*"
+                "${workspaceFolder}/Universal_includes/*",
+                "${workspaceFolder}/Firmware/STM32F103/STM32F103_Hermes/headers"
             ],
             "defines": [
                 "_DEBUG",

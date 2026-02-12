@@ -5,6 +5,7 @@
 #include <libopencm3/usb/usbd.h>
 #include <libopencm3/usb/cdc.h>
 #include <libopencm3/cm3/nvic.h>
+#include <debug_leds.h>
 
 #define USE_INTERRUPT 1 // 1 or 0
 
@@ -30,12 +31,13 @@ usbd_device *usbd_dev;
 
 uint16_t USB_read_data(void *buf, uint16_t len)
 {
+	
 	return usbd_ep_read_packet(usbd_dev, 0x01, buf, len);
 }
 
 uint16_t USB_send_data(void *buf, uint16_t len)
 {
-
+	debug_led_usb_busy(1);
 	uint8_t *buf_ptr = (uint8_t *)buf;
 	int data_to_be_sent = len;
 	int sent_data = 0;
@@ -87,7 +89,7 @@ uint16_t USB_send_data(void *buf, uint16_t len)
 			// wait for usb to send the data
 		}
 	}
-
+	debug_led_usb_busy(0);
 	return sent_data;
 }
 
@@ -95,6 +97,7 @@ uint16_t USB_send_data(void *buf, uint16_t len)
  */
 void __attribute__((weak)) USB_recieve_interrupt()
 {
+
 	char buf[64];
 	int len = USB_read_data(buf, 64);
 
