@@ -205,9 +205,9 @@ int main()
     check_for_jump_to_main();
 
     // load dummy data to i2c
-    for (int i = 0; i < I2C_BUFFER_SIZE; i++)
+    for (int i = 0x4E; i < I2C_BUFFER_SIZE; i++)
     {
-        i2c_buffer[i] = i;
+        i2c_buffer[i] = i - 0x4E;
     }
 
     funDigitalWrite(PD6, FUN_HIGH);
@@ -240,7 +240,6 @@ int main()
             {
                 i2c_buffer[0x16 + i] = bootloader_version[i];
             }
-
             master_sent_Flash_Get_Version = 0;
             Enable_I2C(1);
         }

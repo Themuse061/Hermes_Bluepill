@@ -39,7 +39,7 @@ void write_ladder_red(int value)
 }
 
 uint8_t buf[256];
-uint8_t USB_Commands[16][USB_Command_max_length] = {0};
+uint8_t USB_Commands[USB_Command_max_command_amount][USB_Command_max_length] = {0};
 int USB_data_recieved = 0;
 
 int main(void)

@@ -8,6 +8,10 @@
 
 #define USE_INTERRUPT 1 // 1 or 0
 
+// Global variables
+volatile bool tx_just_sent = 0;
+volatile bool rx_just_recieved = 0;
+
 /** Write a packet
  * @param buf pointer to user data to write
  * @param len # of bytes
@@ -31,7 +35,60 @@ uint16_t USB_read_data(void *buf, uint16_t len)
 
 uint16_t USB_send_data(void *buf, uint16_t len)
 {
-	return usbd_ep_write_packet(usbd_dev, 0x82, buf, len);
+
+	uint8_t *buf_ptr = (uint8_t *)buf;
+	int data_to_be_sent = len;
+	int sent_data = 0;
+
+	while (data_to_be_sent)
+	{
+
+		if (data_to_be_sent > 64)
+		{
+
+			// send the data
+			tx_just_sent = 0;
+			sent_data += usbd_ep_write_packet(usbd_dev, 0x82, buf_ptr, 64);
+			while (tx_just_sent == 0)
+			{
+				// wait for usb to send the data
+			}
+
+			// update Pointers
+			buf_ptr += 64;
+			data_to_be_sent -= 64;
+		}
+		else
+		{
+
+			// send the data
+			tx_just_sent = 0;
+			sent_data += usbd_ep_write_packet(usbd_dev, 0x82, buf_ptr, data_to_be_sent);
+			while (tx_just_sent == 0)
+			{
+				// wait for usb to send the data
+			}
+
+			// Update pointers
+			buf_ptr += data_to_be_sent;
+			data_to_be_sent = 0;
+		}
+	}
+
+	// check if we need to write zero length packet
+	// Only trigger if we hit the exact boundary of the USB packet size
+	if (len > 0 && (len % 64 == 0))
+	{
+		tx_just_sent = 0;
+		// Send the "End of Message" signal
+		usbd_ep_write_packet(usbd_dev, 0x82, NULL, 0);
+		while (tx_just_sent == 0)
+		{
+			// wait for usb to send the data
+		}
+	}
+
+	return sent_data;
 }
 
 /** Called when USB writes to the device
@@ -45,6 +102,10 @@ void __attribute__((weak)) USB_recieve_interrupt()
 	{
 		USB_send_data(buf, len);
 	}
+}
+
+void __attribute__((weak)) USB_transmit_interrupt()
+{
 }
 
 /* --- USB DESCRIPTORS BEGIN --- */
@@ -230,7 +291,17 @@ static void cdcacm_data_rx_cb(usbd_device *usbd_dev, uint8_t ep)
 	(void)ep;
 	(void)usbd_dev;
 
+	rx_just_recieved = 1;
 	USB_recieve_interrupt();
+}
+
+static void cdcacm_data_tx_cb(usbd_device *usbd_dev, uint8_t ep)
+{
+	(void)ep;
+	(void)usbd_dev;
+
+	tx_just_sent = 1;
+	USB_transmit_interrupt();
 }
 
 static void cdcacm_set_config(usbd_device *usbd_dev, uint16_t wValue)
@@ -239,7 +310,7 @@ static void cdcacm_set_config(usbd_device *usbd_dev, uint16_t wValue)
 	(void)usbd_dev;
 
 	usbd_ep_setup(usbd_dev, 0x01, USB_ENDPOINT_ATTR_BULK, 64, cdcacm_data_rx_cb);
-	usbd_ep_setup(usbd_dev, 0x82, USB_ENDPOINT_ATTR_BULK, 64, NULL);
+	usbd_ep_setup(usbd_dev, 0x82, USB_ENDPOINT_ATTR_BULK, 64, cdcacm_data_tx_cb);
 	usbd_ep_setup(usbd_dev, 0x83, USB_ENDPOINT_ATTR_INTERRUPT, 16, NULL);
 
 	usbd_register_control_callback(

@@ -2,8 +2,9 @@
 #define USB_Command_Byte_Length 0
 #define USB_Command_Byte_Command 1
 #define USB_Command_Byte_Data 2
-#define USB_Command_data_size 64
+#define USB_Command_data_size 256
 #define USB_Command_max_length USB_Command_data_size + 2
+#define USB_Command_max_command_amount 25 // How many separate commands can be send in one USB packet
 
 // Usb command handlers
 #define Command_ID_USB_Device_I2C_Write 0x01
