@@ -59,7 +59,7 @@ int main()
 		fprintf(stderr, "Error: Failed to open USB port");
 		return 1;
 	}
-	helper_start_timer();
+	helper_start_timer(1);
 
 	if (Test_ping_with_USB_writes)
 	{
@@ -515,14 +515,15 @@ int main()
 
 		Stack_add_I2C_Write(CH32V003_bootloader_get_version_testing_addr, bootloader_get_version_write, 1);
 		Hermes_Flush_Stack();
-		delay_ms(500);
 
+		delay_ms(500);
 		Stack_add_I2C_Send_recieve(CH32V003_bootloader_get_version_testing_addr, 1, bootloader_get_data_to_read_amount, bootloader_get_version_send_recieve_packet);
 		Hermes_Flush_Stack_with_Read(bootloader_get_version_send_recieve_buffer, sizeof(bootloader_get_version_send_recieve_buffer));
 		printf("Bootloader version:\n");
-		print_array_in_hex(&bootloader_get_version_send_recieve_buffer[4], 4);
-
+		print_array_in_hex(&bootloader_get_version_send_recieve_buffer[0], 8);
 		printf("\n");
+
+		delay_ms(500);
 
 		Hera_I2C_Reset(CH32V003_bootloader_get_version_testing_addr);
 	}
@@ -539,40 +540,12 @@ int main()
 		uint8_t set_flash_pointer_command[3];
 		uint8_t read_flash_command[2];
 
-		uint16_t Flash_poiter_offset;
+		uint16_t Flash_poiter_offset = 0;
 
-		for (int i = 0; i < 256; i++)
+		for (int i = 0; i < 5; i++)
 		{
 			// Set flash pointer
 			Flash_poiter_offset = i * FLASH_READ_SIZE + Flash_Start;
-
-			// Little Endian: Low byte first, then High byte
-			set_flash_pointer_command[0] = Command_ID_I2C_Slave_Flash_Set_Pointer;		 // 0x02
-			set_flash_pointer_command[1] = (uint8_t)(Flash_poiter_offset & 0xFF);		 // Low
-			set_flash_pointer_command[2] = (uint8_t)((Flash_poiter_offset >> 8) & 0xFF); // High
-
-			Stack_add_I2C_Write(Ch32V003_bootloader_jump_testing_addr, set_flash_pointer_command, sizeof(set_flash_pointer_command));
-
-			// Ask MCU to Write Data To Buffer
-			read_flash_command[0] = Command_ID_I2C_Slave_Flash_Read_Page; // 0
-			read_flash_command[1] = FLASH_READ_SIZE;					  //
-			Stack_add_I2C_Write(Ch32V003_bootloader_jump_testing_addr, read_flash_command, sizeof(read_flash_command));
-			delay_ms(10);
-
-			// Read the FLASH
-			Stack_add_read(Ch32V003_bootloader_jump_testing_addr, FLASH_READ_SIZE);
-
-			if (Hermes_Flush_Stack_with_Read(flash_read, FLASH_READ_SIZE + 4))
-			{
-				memcpy(flash_read, &flash_read[4], FLASH_READ_SIZE);
-				printf("%08X:   ", i * 16);
-				print_array_in_hex(flash_read, FLASH_READ_SIZE);
-			}
-			else
-			{
-				printf("MEGA ERROR MY DUDE frfr\n");
-			}
-			delay_ms(500);
 		}
 	}
 
@@ -580,7 +553,7 @@ int main()
 	printf("\n\n\n");
 	USB_deinit();
 	printf("\n--- Test Complete ---\n");
-	helper_end_timer();
+	helper_end_timer(1);
 
 	// 8. wait for user input
 	// printf("Press any key to exit...\n");

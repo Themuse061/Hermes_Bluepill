@@ -4,7 +4,7 @@
 #include "hermes_packet_sending.h"
 #include "Command_ID.h"
 
-#define USB_COMMANDS_VERBOSE_LEVEL 1 // 0 for errors, 1 for normal, 2 for verbose
+#define USB_COMMANDS_VERBOSE_LEVEL 2 // 0 for errors, 1 for normal, 2 for verbose
 
 int Stack_add_I2C_Write(uint8_t I2C_address, uint8_t *data, uint8_t len)
 {
