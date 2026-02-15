@@ -6,7 +6,7 @@
 #include "verbosity_settings.h"
 #include "stdio.h"
 
-int hermes_easy_reset_I2C(uint8_t addr)
+int hermes_easy_I2C_reset(uint8_t addr)
 {
 	if (HERA_VERBOSE_LEVEL > 0)
 	{
@@ -14,14 +14,14 @@ int hermes_easy_reset_I2C(uint8_t addr)
 	}
 
 	uint8_t command_reset[] = {Command_ID_I2C_Slave_Reset_MCU};
-	Stack_add_I2C_Write(addr, command_reset, 1);
+	hermes_add_I2C_write(addr, command_reset, 1);
 	delay_ms(200);
 	Hermes_Flush_Stack();
 	delay_ms(2000);
 	return 1;
 }
 
-int hermes_easy_jump_to_bootloader_I2C(uint8_t addr)
+int hermes_easy_I2C_jump_to_bootloader(uint8_t addr)
 {
 	if (HERA_VERBOSE_LEVEL > 0)
 	{
@@ -31,9 +31,9 @@ int hermes_easy_jump_to_bootloader_I2C(uint8_t addr)
 	uint8_t command_reset[] = {Command_ID_I2C_Slave_Reset_MCU};
 	uint8_t command_jump_to_bootloader[] = {Command_ID_I2C_Slave_Jump_To_Bootloader};
 
-	Stack_add_I2C_Write(addr, command_reset, 1);			  // reset
-	Stack_add_delay(250);									  // wait 50ms
-	Stack_add_I2C_Write(addr, command_jump_to_bootloader, 1); // try to jump
+	hermes_add_I2C_write(addr, command_reset, 1);			   // reset
+	hermes_add_delay_ms(250);								   // wait 50ms
+	hermes_add_I2C_write(addr, command_jump_to_bootloader, 1); // try to jump
 	Hermes_Flush_Stack();
 	delay_ms(2000);
 

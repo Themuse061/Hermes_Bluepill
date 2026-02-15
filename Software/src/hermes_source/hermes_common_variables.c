@@ -1,4 +1,6 @@
 #include "hermes_header.h"
 
-uint8_t hermes_send_stack[][] = {0};
-uint8_t hermes_recieve_stack[][] = {0};
+uint8_t hermes_send_buffer[HERMES_BUFFER_SEND_STACK_MAX_HEIGHT][HERMES_BUFFER_SEND_MAX_LENGTH];
+uint8_t hermes_recieve_buffer[HERMES_BUFFER_RECIEVE_STACK_MAX_HEIGHT][HERMES_BUFFER_RECIEVE_MAX_LENGTH];
+uint8_t hermes_recieve_buffer_bytes[HERMES_BUFFER_MAX_BYTES];
+

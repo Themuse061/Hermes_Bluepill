@@ -103,7 +103,7 @@ The PC software is built as a command-line tool relying on a custom "Hermes" USB
 
 ### Timing Assumptions
 *   **Delay Offloading:** Delays are often handled by the Bridge, not the PC. The PC sends a "Delay" command (e.g., 250ms), and the Bridge pauses execution before processing the next command in the stack.
-*   **Host Delays:** High-level logic (like `hermes_easy_jump_to_bootloader_I2C`) employs PC-side `Sleep()` calls after flushing to allow the target time to reset or boot.
+*   **Host Delays:** High-level logic (like `hermes_easy_I2C_jump_to_bootloader`) employs PC-side `Sleep()` calls after flushing to allow the target time to reset or boot.
 
 ---
 
@@ -114,14 +114,14 @@ The primary goal is **Latency Hiding**. USB round-trip times (1ms+) are signific
 
 ### API & Abstraction Boundaries
 The API resides in `USB_commands.c` and `Hera_Functions.c`.
-*   **`Stack_add_I2C_Write(addr, data, len)`:** Encapsulates an I2C Write transaction.
-*   **`Stack_add_I2C_Send_recieve(addr, write_len, read_len, write_data)`:** Encapsulates a Write-then-Read transaction (Atomic Start-Write-Restart-Read-Stop implied).
-*   **`Stack_add_delay(ms)`:** Adds a pause to the execution queue on the Bridge.
+*   **`hermes_add_I2C_write(addr, data, len)`:** Encapsulates an I2C Write transaction.
+*   **`hermes_add_I2C_send_recieve(addr, write_len, read_len, write_data)`:** Encapsulates a Write-then-Read transaction (Atomic Start-Write-Restart-Read-Stop implied).
+*   **`hermes_add_delay_ms(ms)`:** Adds a pause to the execution queue on the Bridge.
 
 #### Code Example: Adding an I2C Write to the Stack (`USB_commands.c`)
 This function constructs the header and queues it without sending USB data immediately.
 ```c
-int Stack_add_I2C_Write(uint8_t I2C_address, uint8_t *data, uint8_t len)
+int hermes_add_I2C_write(uint8_t I2C_address, uint8_t *data, uint8_t len)
 {
     // Packet Header: [Length + 3] [Command ID] [I2C Address]
     uint8_t I2C_header[] = {len + 3, Command_ID_USB_Device_I2C_Write, I2C_address};
@@ -157,7 +157,7 @@ int Stack_add_I2C_Write(uint8_t I2C_address, uint8_t *data, uint8_t len)
 ## 6. Communication and Data Flow
 
 ### End-to-End Transaction (Example: Read Flash)
-1.  **PC:** `Stack_add_I2C_Send_recieve(Addr, 1, CHUNK_SIZE, Cmd_Read_Page)`
+1.  **PC:** `hermes_add_I2C_send_recieve(Addr, 1, CHUNK_SIZE, Cmd_Read_Page)`
 2.  **PC:** `Hermes_Flush_Stack_with_Read(...)`
 3.  **USB:** Transmits packet `[Len] [0x02 (Send/Recv)] [Addr] [1] [CHUNK] [0x03]`
 4.  **Hermes (Bridge):**

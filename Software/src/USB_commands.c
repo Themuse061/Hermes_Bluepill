@@ -5,12 +5,12 @@
 #include "Command_ID.h"
 #include "verbosity_settings.h"
 
-int Stack_add_I2C_Write(uint8_t I2C_address, uint8_t *data, uint8_t len)
+int hermes_add_I2C_write(uint8_t I2C_address, uint8_t *data, uint8_t len)
 {
     uint8_t I2C_header[] = {len + 3, Command_ID_USB_Device_I2C_Write, I2C_address};
     Hermes_Add_Command_To_Stack_Withouta_Advancing_The_Stack_Height(I2C_header, 3);
 
-    if (USB_COMMANDS_VERBOSE_LEVEL > 1)
+    if (HERMES_VERBOSITY_USB > 1)
     {
         printf("LOG 2: Adding I2C Write to stack\n");
     }
@@ -19,14 +19,14 @@ int Stack_add_I2C_Write(uint8_t I2C_address, uint8_t *data, uint8_t len)
 /**
  * @brief YOU NEEED TO HANDLE RECIEVE
  */
-int Stack_add_I2C_Send_recieve(uint8_t I2C_address, uint8_t write_len, uint8_t read_len, uint8_t *write_data)
+int hermes_add_I2C_send_recieve(uint8_t I2C_address, uint8_t write_len, uint8_t read_len, uint8_t *write_data)
 {
     uint8_t command_len = 5 + write_len;
     uint8_t Send_Recieve_command[] = {
         command_len, Command_ID_USB_Device_I2C_Send_Receive,
         I2C_address, write_len, read_len};
 
-    if (USB_COMMANDS_VERBOSE_LEVEL > 1)
+    if (HERMES_VERBOSITY_USB > 1)
     {
         printf("LOG 2: Adding I2C Send Recieve to stack\n");
     }
@@ -39,25 +39,25 @@ int Stack_add_I2C_Send_recieve(uint8_t I2C_address, uint8_t write_len, uint8_t r
  *
  * @param data ONLY DATA NO COMMAND NUMBER
  */
-int Stack_add_echo(uint8_t *data, uint8_t len)
+int hermes_add_echo(uint8_t *data, uint8_t len)
 {
 
     uint8_t echo_header[] = {len + 2, Command_ID_USB_Device_Echo};
 
     Hermes_Add_Command_To_Stack_Withouta_Advancing_The_Stack_Height(echo_header, 2);
 
-    if (USB_COMMANDS_VERBOSE_LEVEL > 1)
+    if (HERMES_VERBOSITY_USB > 1)
     {
         printf("LOG 2: Adding echo to stack\n");
     }
     return Hermes_Add_Command_To_Stack(data, len);
 }
 
-int Stack_add_ping(void)
+int hermes_add_ping(void)
 {
     uint8_t packet[] = {2, Command_ID_USB_Device_Ping};
 
-    if (USB_COMMANDS_VERBOSE_LEVEL > 1)
+    if (HERMES_VERBOSITY_USB > 1)
     {
         printf("LOG 2: Adding ping to stack\n");
     }
@@ -65,7 +65,7 @@ int Stack_add_ping(void)
     return Hermes_Add_Command_To_Stack(packet, sizeof(packet));
 }
 
-int Stack_add_delay(int delay)
+int hermes_add_delay_ms(int delay)
 {
 
     uint8_t packet[] = {
@@ -77,7 +77,7 @@ int Stack_add_delay(int delay)
         (uint8_t)((delay >> 24) & 0xFF) // MSB
     };
 
-    if (USB_COMMANDS_VERBOSE_LEVEL > 1)
+    if (HERMES_VERBOSITY_USB > 1)
     {
         printf("LOG 2: Adding delay to stack: %d ms\n", delay);
     }
@@ -85,7 +85,7 @@ int Stack_add_delay(int delay)
     return Hermes_Add_Command_To_Stack(packet, sizeof(packet));
 }
 
-int Stack_add_read(uint8_t addr, uint8_t len)
+int hermes_add_I2C_read(uint8_t addr, uint8_t len)
 {
 
     uint8_t packet[] = {
@@ -95,7 +95,7 @@ int Stack_add_read(uint8_t addr, uint8_t len)
         len,                            // len
     };
 
-    if (USB_COMMANDS_VERBOSE_LEVEL > 1)
+    if (HERMES_VERBOSITY_USB > 1)
     {
         printf("LOG 2: Adding I2C Read to stack\n");
     }
