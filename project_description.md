@@ -103,7 +103,7 @@ The PC software is built as a command-line tool relying on a custom "Hermes" USB
 
 ### Timing Assumptions
 *   **Delay Offloading:** Delays are often handled by the Bridge, not the PC. The PC sends a "Delay" command (e.g., 250ms), and the Bridge pauses execution before processing the next command in the stack.
-*   **Host Delays:** High-level logic (like `Hera_I2C_jump_to_bootloader`) employs PC-side `Sleep()` calls after flushing to allow the target time to reset or boot.
+*   **Host Delays:** High-level logic (like `hermes_easy_jump_to_bootloader_I2C`) employs PC-side `Sleep()` calls after flushing to allow the target time to reset or boot.
 
 ---
 
@@ -125,7 +125,7 @@ int Stack_add_I2C_Write(uint8_t I2C_address, uint8_t *data, uint8_t len)
 {
     // Packet Header: [Length + 3] [Command ID] [I2C Address]
     uint8_t I2C_header[] = {len + 3, Command_ID_USB_Device_I2C_Write, I2C_address};
-    
+
     // Add Header
     Hermes_Add_Command_To_Stack_Withouta_Advancing_The_Stack_Height(I2C_header, 3);
 

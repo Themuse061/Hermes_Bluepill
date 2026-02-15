@@ -1,6 +1,6 @@
 #pragma once
 
-#define Test_ping_with_USB_writes 0
+#define Test_ping_with_hermes_USB_sends 0
 // Uses USB_drivers.h
 #define Test_ping_with_Hermes_stack_and_manual_read 0
 // Adds to stack, flushes and reads

@@ -10,7 +10,7 @@ static struct sp_port *port = NULL;
 // Internal handle to event set for waiting
 static struct sp_event_set *event_set = NULL;
 
-int USB_init(const char *port_name, int baud_rate)
+int hermes_USB_init(const char *port_name, int baud_rate)
 {
     if (port != NULL)
     {
@@ -41,7 +41,7 @@ int USB_init(const char *port_name, int baud_rate)
     return 0;
 }
 
-void USB_deinit(void)
+void hermes_USB_deinit(void)
 {
     if (event_set != NULL)
     {
@@ -57,7 +57,7 @@ void USB_deinit(void)
     }
 }
 
-int USB_write(const unsigned char *data, int length)
+int hermes_USB_send(const unsigned char *data, int length)
 {
     if (port == NULL)
         return -1;
@@ -65,21 +65,21 @@ int USB_write(const unsigned char *data, int length)
     return sp_blocking_write(port, data, length, 0);
 }
 
-int USB_read(unsigned char *buffer, int length, unsigned int timeout_ms)
+int hermes_USB_recieve(unsigned char *buffer, int length, unsigned int timeout_ms)
 {
     if (port == NULL)
         return -1;
     return sp_blocking_read(port, buffer, length, timeout_ms);
 }
 
-int USB_check_for_data(void)
+int hermes_USB_check_recieve_buffer(void)
 {
     if (port == NULL)
         return -1;
     return sp_input_waiting(port);
 }
 
-int USB_wait_for_data(unsigned int max_delay_ms)
+int hermes_USB_wait_for_recieve(unsigned int max_delay_ms)
 {
     if (port == NULL)
         return -1;

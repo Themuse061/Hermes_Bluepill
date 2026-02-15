@@ -5,7 +5,7 @@
 #include "Command_ID.h"
 #include "hermes_packet_sending.h"
 #include "verbosity_settings.h"
-
+#include "hermes_header.h"
 
 #define HERMES_MAX_TIMEOUT 5000
 
@@ -92,7 +92,7 @@ int Hermes_Add_Command_To_Stack(uint8_t *new_data, uint8_t len)
 
 int Hermes_Read_Buffer_USB(uint8_t *read_pointer, int len)
 {
-	return USB_read(read_pointer, len, HERMES_MAX_TIMEOUT);
+	return hermes_USB_recieve(read_pointer, len, HERMES_MAX_TIMEOUT);
 }
 
 int Hermes_Flush_Stack(void)
@@ -114,10 +114,10 @@ int Hermes_Flush_Stack(void)
 		printf("\n");
 	}
 
-	int sent = USB_write(hermes_packet_stack, len_to_send);
+	int sent = hermes_USB_send(hermes_packet_stack, len_to_send);
 	if (sent <= 0)
 	{
-		printf("LOG 0: Hermes_Flush_Stack Failed, USB_write error: %d\n", sent);
+		printf("LOG 0: Hermes_Flush_Stack Failed, hermes_USB_send error: %d\n", sent);
 	}
 	else
 	{

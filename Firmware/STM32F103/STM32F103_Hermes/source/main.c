@@ -124,7 +124,7 @@ int main(void)
 void USB_recieve_interrupt()
 {
 	debug_led_usb_busy(1);
-	int len = USB_read_data(buf, 256);
+	int len = hermes_USB_recieve_data(buf, 256);
 
 	if (len) // If any data was read
 	{

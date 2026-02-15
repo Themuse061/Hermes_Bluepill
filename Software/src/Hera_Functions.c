@@ -6,7 +6,7 @@
 #include "verbosity_settings.h"
 #include "stdio.h"
 
-int Hera_I2C_Reset(uint8_t addr)
+int hermes_easy_reset_I2C(uint8_t addr)
 {
 	if (HERA_VERBOSE_LEVEL > 0)
 	{
@@ -21,7 +21,7 @@ int Hera_I2C_Reset(uint8_t addr)
 	return 1;
 }
 
-int Hera_I2C_jump_to_bootloader(uint8_t addr)
+int hermes_easy_jump_to_bootloader_I2C(uint8_t addr)
 {
 	if (HERA_VERBOSE_LEVEL > 0)
 	{

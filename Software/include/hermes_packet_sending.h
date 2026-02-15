@@ -30,7 +30,7 @@ int Hermes_Read_Buffer_USB(uint8_t *read_pointer, int len);
  * @brief Sends all batched commands in the stack to the USB device.
  *
  * Clears the stack after sending.
- * @return Number of bytes sent on success, or error code from USB_write.
+ * @return Number of bytes sent on success, or error code from hermes_USB_send.
  */
 int Hermes_Flush_Stack(void);
 

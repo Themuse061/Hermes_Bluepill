@@ -25,13 +25,13 @@ uint16_t USB_send_data(void *buf, uint16_t len);
  * @param len # of bytes
  * @return Actual # of bytes read
  */
-uint16_t USB_read_data(void *buf, uint16_t len);
+uint16_t hermes_USB_recieve_data(void *buf, uint16_t len);
 
 usbd_device *usbd_dev;
 
-uint16_t USB_read_data(void *buf, uint16_t len)
+uint16_t hermes_USB_recieve_data(void *buf, uint16_t len)
 {
-	
+
 	return usbd_ep_read_packet(usbd_dev, 0x01, buf, len);
 }
 
@@ -99,7 +99,7 @@ void __attribute__((weak)) USB_recieve_interrupt()
 {
 
 	char buf[64];
-	int len = USB_read_data(buf, 64);
+	int len = hermes_USB_recieve_data(buf, 64);
 
 	if (len)
 	{
@@ -323,7 +323,7 @@ static void cdcacm_set_config(usbd_device *usbd_dev, uint16_t wValue)
 		cdcacm_control_request);
 }
 
-void USB_initialization()
+void hermes_USB_initialization()
 {
 
 	int i;

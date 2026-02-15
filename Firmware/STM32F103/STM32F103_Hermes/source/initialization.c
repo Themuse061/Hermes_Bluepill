@@ -71,7 +71,7 @@ void initialize_I2C()
 void hardware_initalization()
 {
 	initialize_RCC();
-	USB_initialization();
+	hermes_USB_initialization();
 	initialize_GPIO();
 	initialize_I2C();
 }

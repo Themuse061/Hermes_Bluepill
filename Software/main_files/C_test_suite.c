@@ -9,6 +9,7 @@
 #include <conio.h>
 #include "Hera_Functions.h"
 #include <string.h>
+#include "hermes_header.h"
 
 // uint8_t data
 uint8_t ping_data[] = {0x09, 0x04, 0xFF, 0xaa, 0x00, 0x11, 0x00, 0xaa, 0xFF};
@@ -37,7 +38,7 @@ uint8_t dummy3_data_read2[dummy3_len + 4];
 uint8_t dummy3_data_write_1[] = {dummy3_ID, 0x01, 0x02, 0x03};
 uint8_t dummy3_data_write_2[] = {dummy3_ID, 0x11, 0x12, 0x13};
 
-// Ideally, pass these as arguments to USB_init
+// Ideally, pass these as arguments to hermes_USB_init
 const char *COM_PORT = "COM14";
 const int BAUD_RATE = 115200;
 
@@ -53,15 +54,15 @@ void print_array_in_hex(uint8_t *array, int len)
 int main()
 {
 	// 1. Setup Port
-	// Note: USB_init logic remains same (helper/driver level)
-	if (USB_init(COM_PORT, BAUD_RATE) < 0)
+	// Note: hermes_USB_init logic remains same (helper/driver level)
+	if (hermes_USB_init(COM_PORT, BAUD_RATE) < 0)
 	{
 		fprintf(stderr, "Error: Failed to open USB port");
 		return 1;
 	}
 	helper_start_timer(1);
 
-	if (Test_ping_with_USB_writes)
+	if (Test_ping_with_hermes_USB_sends)
 	{
 
 		printf("\n\n=========== Testing ping with USB writes ===========\n");
@@ -69,11 +70,11 @@ int main()
 		printf("sending: ");
 		print_array_in_hex(USB_raw_ping, 2);
 
-		USB_write(USB_raw_ping, 2);
+		hermes_USB_send(USB_raw_ping, 2);
 		delay_ms(10);
 
 		uint8_t USB_ping_read[9];
-		USB_read(USB_ping_read, 9, 5000);
+		hermes_USB_recieve(USB_ping_read, 9, 5000);
 
 		printf("expe: ");
 		print_array_in_hex(ping_data, sizeof(ping_data));
@@ -488,24 +489,24 @@ int main()
 	if (CH32V003_bootloader_jump_testing)
 	{
 		// reset
-		Hera_I2C_Reset(Ch32V003_bootloader_jump_testing_addr);
+		hermes_easy_reset_I2C(Ch32V003_bootloader_jump_testing_addr);
 
 		// jump to boot
-		Hera_I2C_jump_to_bootloader(Ch32V003_bootloader_jump_testing_addr);
+		hermes_easy_jump_to_bootloader_I2C(Ch32V003_bootloader_jump_testing_addr);
 		delay_ms(3000);
 
 		// reset
-		Hera_I2C_Reset(Ch32V003_bootloader_jump_testing_boot_addr);
+		hermes_easy_reset_I2C(Ch32V003_bootloader_jump_testing_boot_addr);
 
 		// reset
-		Hera_I2C_Reset(Ch32V003_bootloader_jump_testing_addr);
+		hermes_easy_reset_I2C(Ch32V003_bootloader_jump_testing_addr);
 	}
 
 	if (CH32V003_bootloader_get_version_testing)
 	{
 		printf("\n\n=========== Testing CH32V003 Bootloader get version  ===========\n");
 
-		Hera_I2C_jump_to_bootloader(CH32V003_bootloader_get_version_testing_addr);
+		hermes_easy_jump_to_bootloader_I2C(CH32V003_bootloader_get_version_testing_addr);
 
 		uint8_t bootloader_get_version_send_recieve_packet[] = {Command_ID_I2C_Slave_Flash_Get_Version};
 		uint8_t bootloader_get_version_send_recieve_buffer[16];
@@ -525,7 +526,7 @@ int main()
 
 		delay_ms(500);
 
-		Hera_I2C_Reset(CH32V003_bootloader_get_version_testing_addr);
+		hermes_easy_reset_I2C(CH32V003_bootloader_get_version_testing_addr);
 	}
 
 	if (CH32V003_FLASH_read_testing)
@@ -546,9 +547,9 @@ int main()
 
 		// 1. Jump to Bootloader
 		printf("Reseting...\n");
-		Hera_I2C_Reset(CH32V003_FLASH_read_testing_addr);
+		hermes_easy_reset_I2C(CH32V003_FLASH_read_testing_addr);
 		printf("Jumping to bootloader...\n");
-		Hera_I2C_jump_to_bootloader(CH32V003_FLASH_read_testing_addr);
+		hermes_easy_jump_to_bootloader_I2C(CH32V003_FLASH_read_testing_addr);
 		delay_ms(100);
 
 		for (int i = 0; i < 5; i++)
@@ -585,12 +586,12 @@ int main()
 		}
 
 		printf("Reseting...\n");
-		Hera_I2C_Reset(CH32V003_FLASH_read_testing_addr);
+		hermes_easy_reset_I2C(CH32V003_FLASH_read_testing_addr);
 	}
 
 	// Cleanup
 	printf("\n\n\n");
-	USB_deinit();
+	hermes_USB_deinit();
 	printf("\n--- Test Complete ---\n");
 	helper_end_timer(1);
 
