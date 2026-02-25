@@ -3,7 +3,6 @@
 #include <string.h>
 #include "hermes_packet_sending.h"
 #include "Command_ID.h"
-#include "verbosity_settings.h"
 
 int hermes_add_I2C_write(uint8_t I2C_address, uint8_t *data, uint8_t len)
 {

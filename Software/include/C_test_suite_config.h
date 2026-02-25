@@ -1,13 +1,15 @@
 #pragma once
 
-#define Test_ping_with_hermes_USB_sends 0
-// Uses USB_drivers.h
-#define Test_ping_with_Hermes_stack_and_manual_read 0
-// Adds to stack, flushes and reads
-#define Test_ping_with_Hermes_flush_and_read 0
-// Uses hermes flush and read
+#define Test_ping_with_hermes_USB_sends 1
+// Uses USB_drivers.c directly
+#define Test_ping_with_Hermes_stack_and_manual_read 1
+// Adds to stack, flushes and reads manually
+#define Test_ping_with_Hermes_parse_USB 1
+// Adds to stack, flushes and reads with parse USB
+#define Test_ping_with_Hermes_parse_USB_multiple_pings 1
+// Adds multiple pings to stack, flushes and reads with parse USB
+
 #define Test_echo 0
-// Doesn't work properly lol
 
 #define Test_TCA9554_I2C_write 0
 // Uses I2C write and command packing
@@ -17,7 +19,7 @@
 #define TCA9554_REG_OUTPUT 0x01
 #define TCA9554_REG_CONFIG 0x03
 
-#define Test_hot_plate_send_recieve 1
+#define Test_hot_plate_send_recieve 0
 #define Test_hot_plate_send_and_read 0
 #define Hot_plate_address 0x28
 #define dummy1_ID 0x03
@@ -31,7 +33,7 @@
 #define Ch32V003_bootloader_jump_testing_addr 0x48
 #define Ch32V003_bootloader_jump_testing_boot_addr 0x48
 
-#define CH32V003_bootloader_get_version_testing 1
+#define CH32V003_bootloader_get_version_testing 0
 #define CH32V003_bootloader_get_version_testing_addr 0x48
 
 #define FLASH_READ_SIZE 64

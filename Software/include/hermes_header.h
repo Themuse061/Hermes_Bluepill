@@ -1,42 +1,49 @@
 #pragma once
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdio.h>
 
 // -------------------- VERVOSITY SETTINGS -------------------- //
 // How much of printf'ing the functions do
 // 0 - errors
-// 1 -> placeholder
+// 1 -> not used (warnings?)
 // 2 - verbose, each function does a print
 
-#define HERMES_VERBOSITY_USB 0
+#define HERMES_VERBOSITY_USB 2
 // opening ports, sending packets, reading buffer
 
-#define HERMES_PACKET_VERBOSITY 0
+#define HERMES_PACKET_VERBOSITY 2
 
-#define HERMES_ADD_VERBOSITY_USB 0 // not implemented
+#define HERMES_ADD_VERBOSITY_USB 2
 
-#define HERMES_SEND_VERBOSITY 0 // not implemented
+#define HERMES_SEND_VERBOSITY 2 // not implemented
 
-#define HERMES_EASY_VERBOSITY 0 // not implemented
+#define HERMES_EASY_VERBOSITY 2 // not implemented
+
+/*
+print template
+printf("-LOG- [level] [category], [function]: [description]\n");
+*/
 
 // -------------------- CONFIGURATION BLOCK -------------------- //
 // Parameters modulating work of the functions
 
 // transmit/send buffer
-#define HERMES_BUFFER_SEND_STACK_MAX_HEIGHT 16 // max amount of distictive commands in single transmision
+#define HERMES_BUFFER_SEND_STACK_MAX_HEIGHT 16 // max amount of distictive commands in single transmision.
 #define HERMES_BUFFER_SEND_MAX_LENGTH 256	   // max lenght of single command
 
 // recieve buffer
 #define HERMES_BUFFER_RECIEVE_STACK_MAX_HEIGHT 16 // max amount of distictive commands in single transmision
 #define HERMES_BUFFER_RECIEVE_MAX_LENGTH 256	  // max lenght of single command
-#define HERMES_BUFFER_MAX_BYTES (HERMES_BUFFER_RECIEVE_STACK_MAX_HEIGHT * HERMES_BUFFER_RECIEVE_MAX_LENGTH)
+#define HERMES_BUFFER_MAX_BYTES (16 * 256)		  // max length of temporary buffer for direct USB reads/writes
 
 #define HERMES_MIDDLEMAN_MAX_TIMEOUT_MS 10000 // time before middleman device (bluepill) is considered to be dead
 
 // -------------------- EXTERN VARIABLES BLOCK -------------------- //
+// Declared in hermes_packet.c
+
 extern uint8_t hermes_send_buffer[HERMES_BUFFER_SEND_STACK_MAX_HEIGHT][HERMES_BUFFER_SEND_MAX_LENGTH];
 extern uint8_t hermes_recieve_buffer[HERMES_BUFFER_RECIEVE_STACK_MAX_HEIGHT][HERMES_BUFFER_RECIEVE_MAX_LENGTH];
-extern uint8_t hermes_recieve_buffer_bytes[HERMES_BUFFER_MAX_BYTES];
 
 // ------------------------------------------------------------------------------------------------ //
 // ---------------------------------------- FUNCTION START ---------------------------------------- //
@@ -48,7 +55,8 @@ extern uint8_t hermes_recieve_buffer_bytes[HERMES_BUFFER_MAX_BYTES];
 int hermes_USB_init(const char *port_name, int baud_rate);
 void hermes_USB_deinit(void);
 int hermes_USB_send(const unsigned char *data, int length);
-int hermes_USB_recieve(unsigned char *buffer, int length, unsigned int timeout_ms);
+int hermes_USB_recieve(unsigned char *buffer, int length);
+int hermes_USB_recieve_with_timeout(unsigned char *buffer, int length, unsigned int timeout_ms);
 int hermes_USB_check_recieve_buffer(void);
 int hermes_USB_wait_for_recieve(unsigned int max_delay_ms);
 
@@ -56,12 +64,16 @@ int hermes_USB_wait_for_recieve(unsigned int max_delay_ms);
 // Functions for programming at packet level
 
 /// @brief
-/// sends the buffer and waits for echo from middleman
-int hermes_packet_flush();
-
-/// @brief
 /// sends the buffor and does not waits for echo from middleman
 int hermes_packet_flush_blind();
+
+/// @brief
+/// reads the usb buffer and parses the data into recieve buffer You need to wait for all the data by yourself
+int hermes_packet_parse_USB();
+
+/// @brief
+/// sends the buffer and waits for echo from middleman. Leaves data in hermes_recieve_buffer
+int hermes_packet_flush();
 
 /// @brief
 /// returns how many empty spaces for commands are there in the stack buffer
@@ -73,7 +85,7 @@ int hermes_packet_check_heigh_taken();
 
 /// @brief
 /// adds a command to command buffer
-int hermes_packet_add_comand(*uint8_t command_array, int len);
+int hermes_packet_add_comand(uint8_t *command_array, int len);
 
 // -------------------- ADD BLOCK -------------------- //
 // Adding functions to command buffer

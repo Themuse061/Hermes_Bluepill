@@ -1,8 +1,7 @@
-
-#include "Usb_driver.h"
 #include <libserialport.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "hermes_header.h"
 
 // Internal handle to the serial port
 static struct sp_port *port = NULL;
@@ -12,6 +11,11 @@ static struct sp_event_set *event_set = NULL;
 
 int hermes_USB_init(const char *port_name, int baud_rate)
 {
+    if (HERMES_ADD_VERBOSITY_USB > 1)
+    {
+        printf("-LOG- VERBOSE USB, hermes_USB_init: Initializing USB\n");
+    }
+
     if (port != NULL)
     {
         // Already initialized
@@ -43,6 +47,12 @@ int hermes_USB_init(const char *port_name, int baud_rate)
 
 void hermes_USB_deinit(void)
 {
+
+    if (HERMES_ADD_VERBOSITY_USB > 1)
+    {
+        printf("-LOG- VERBOSE USB, hermes_USB_deinit: Denitializing USB\n");
+    }
+
     if (event_set != NULL)
     {
         sp_free_event_set(event_set);
@@ -59,21 +69,46 @@ void hermes_USB_deinit(void)
 
 int hermes_USB_send(const unsigned char *data, int length)
 {
+    if (HERMES_ADD_VERBOSITY_USB > 1)
+    {
+        printf("-LOG- VERBOSE USB, hermes_USB_send: Sending data:\n");
+        for (int i = 0; i < length; i++)
+        {
+            printf("%02X ", data[i]);
+        }
+        printf("\n");
+    }
+
     if (port == NULL)
         return -1;
     // Timeout 0 means wait indefinitely
     return sp_blocking_write(port, data, length, 0);
 }
 
-int hermes_USB_recieve(unsigned char *buffer, int length, unsigned int timeout_ms)
+int hermes_USB_recieve_with_timeout(unsigned char *buffer, int length, unsigned int timeout_ms)
 {
+    if (HERMES_ADD_VERBOSITY_USB > 1)
+    {
+        printf("-LOG- VERBOSE USB, hermes_USB_recieve_with_timeout: Trying to recieve data. len: %i. timeout: %i\n", length, timeout_ms);
+    }
+
     if (port == NULL)
         return -1;
     return sp_blocking_read(port, buffer, length, timeout_ms);
 }
 
+int hermes_USB_recieve(unsigned char *buffer, int length)
+{
+    return hermes_USB_recieve_with_timeout(buffer, length, HERMES_MIDDLEMAN_MAX_TIMEOUT_MS);
+}
+
 int hermes_USB_check_recieve_buffer(void)
 {
+    if (HERMES_ADD_VERBOSITY_USB > 1)
+    {
+        printf("-LOG- VERBOSE USB, hermes_USB_check_recieve_buffer: Checking buffer length\n");
+    }
+
     if (port == NULL)
         return -1;
     return sp_input_waiting(port);
@@ -81,6 +116,12 @@ int hermes_USB_check_recieve_buffer(void)
 
 int hermes_USB_wait_for_recieve(unsigned int max_delay_ms)
 {
+
+    if (HERMES_ADD_VERBOSITY_USB > 1)
+    {
+        printf("-LOG- VERBOSE USB, hermes_USB_wait_for_recieve: waiting up to %ims for a read\n", max_delay_ms);
+    }
+
     if (port == NULL)
         return -1;
 
