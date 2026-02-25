@@ -9,16 +9,16 @@
 // 1 -> not used (warnings?)
 // 2 - verbose, each function does a print
 
-#define HERMES_VERBOSITY_USB 2
+#define HERMES_VERBOSITY_USB 0
 // opening ports, sending packets, reading buffer
 
-#define HERMES_PACKET_VERBOSITY 2
+#define HERMES_PACKET_VERBOSITY 0
 
-#define HERMES_ADD_VERBOSITY_USB 2
+#define HERMES_ADD_VERBOSITY_USB 0
 
-#define HERMES_SEND_VERBOSITY 2 // not implemented
+#define HERMES_SEND_VERBOSITY 0 // not implemented
 
-#define HERMES_EASY_VERBOSITY 2 // not implemented
+#define HERMES_EASY_VERBOSITY 0 // not implemented
 
 /*
 print template

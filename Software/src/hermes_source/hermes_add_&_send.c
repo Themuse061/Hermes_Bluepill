@@ -30,9 +30,14 @@ int hermes_add_echo(uint8_t *data, uint8_t len)
 	if (HERMES_VERBOSITY_USB > 1)
 	{
 		printf("-LOG- VERBOSE PACKET: Adding echo to stack\n");
+		for (int i = 0; i < len + 2; i++)
+		{
+			printf(" %02X", echo_packet[i]);
+		}
+		printf("\n");
 	}
 
-	return hermes_packet_add_comand(echo_packet, sizeof(echo_packet));
+	return hermes_packet_add_comand(echo_packet, len + 2);
 }
 
 int hermes_send_ping(void)

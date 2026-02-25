@@ -37,7 +37,7 @@ static void log_packet(const uint8_t *data, uint8_t len)
 
 int hermes_packet_check_height_free()
 {
-	int free_spaces = hermes_current_send_stack_position - HERMES_BUFFER_SEND_STACK_MAX_HEIGHT;
+	int free_spaces = HERMES_BUFFER_SEND_STACK_MAX_HEIGHT - hermes_current_send_stack_position;
 	if (HERMES_PACKET_VERBOSITY > 1)
 	{
 		printf("-LOG- VERBOSE PACKET, hermes_packet_check_height_free: There are %i free spaces\n", free_spaces);
@@ -58,7 +58,7 @@ int hermes_packet_add_comand(uint8_t *command_array, int len)
 {
 
 	// check if there is free space for a command
-	if (hermes_packet_check_height_free)
+	if (hermes_packet_check_height_free())
 	{
 		// Check if the command is too long
 		if (len < HERMES_BUFFER_SEND_MAX_LENGTH)
@@ -70,6 +70,13 @@ int hermes_packet_add_comand(uint8_t *command_array, int len)
 				printf("\n");
 			}
 
+			// make sure that the place for command is empty
+			for (int i = 0; i < HERMES_BUFFER_SEND_MAX_LENGTH; i++)
+			{
+				hermes_send_buffer[hermes_current_send_stack_position][i] = 0;
+			}
+
+			// copy the command
 			uint8_t *source = command_array;
 			uint8_t *destination = hermes_send_buffer[hermes_current_send_stack_position];
 			int length = len;
@@ -97,13 +104,14 @@ int hermes_packet_flush_blind()
 	// Print raw data from send buffer
 	// if (HERMES_PACKET_VERBOSITY > 1)
 	// {
-	// 	printf("-LOG- VERBOSE PACKET, hermes_packet_flush_blind: Data in buffers (cut to 32 bytes):\n");
+	// 	printf("-LOG- VERBOSE PACKET, hermes_packet_flush_blind: Data in hermes_send_buffer (cut to 32 bytes):\n");
 	// 	for (int i = 0; i < HERMES_BUFFER_SEND_STACK_MAX_HEIGHT; i++)
 	// 	{
-	// 		/* code */
 
+	// 		printf("%i: ", i);
 	// 		for (int j = 0; j < 32; j++)
 	// 		{
+
 	// 			printf("%02X ", hermes_send_buffer[i][j]);
 	// 		}
 	// 		printf("\n");
@@ -113,7 +121,10 @@ int hermes_packet_flush_blind()
 	int current_processed_command = 0;
 	int bytes_in_buffer = 0;
 
-	while (hermes_send_buffer[current_processed_command][0])
+	// reset temp buffer
+	memset(hermes_temp_buffer_bytes, 0, sizeof(hermes_temp_buffer_bytes));
+
+	while (hermes_send_buffer[current_processed_command][0] && current_processed_command < HERMES_BUFFER_SEND_STACK_MAX_HEIGHT)
 	{
 		uint8_t *source = hermes_send_buffer[current_processed_command];
 		uint8_t *destination = &hermes_temp_buffer_bytes[bytes_in_buffer];
@@ -139,6 +150,9 @@ int hermes_packet_flush_blind()
 		}
 		// reset stack
 		hermes_current_send_stack_position = 0;
+
+		// reset send buffer
+		memset(hermes_send_buffer, 0, sizeof(hermes_send_buffer));
 
 		return bytes_send;
 	}
@@ -168,7 +182,7 @@ static int hermes_read_usb_and_put_it_into_some_buffer(uint8_t *new_data_place)
 		if (HERMES_PACKET_VERBOSITY > 1)
 		{
 			printf("-LOG- VERBOSE PACKET, hermes_read_usb_and_put_it_into_some_buffer: there are %i bytes in buffer\n", data_in_buffer_amount);
-			printf("-LOG- VERBOSE PACKET, hermes_read_usb_and_put_it_into_some_buffer: copying data to some buffer");
+			printf("-LOG- VERBOSE PACKET, hermes_read_usb_and_put_it_into_some_buffer: copying data to some buffer\n");
 		}
 		hermes_USB_recieve(new_data_place, data_in_buffer_amount);
 	}
@@ -194,26 +208,63 @@ int hermes_packet_flush()
 		return return_code;
 	}
 
-	// read new data
-	int temp_buffer_last_element = 0;
+	// reset recieve buffer
+	memset(hermes_recieve_buffer, 0, sizeof(hermes_recieve_buffer));
 
-	// temp_buffer_last_element += hermes_read_usb_and_put_it_into_some_buffer(hermes_temp_buffer_bytes[temp_buffer_last_element]);
-
-	// parse the data
-
-	// check if last byte == echo
-	if (memcmp(hermes_recieve_buffer[return_code + 1], ping_data, 9))
+	int current_command = 0;
+	int new_bytes_amount = 0;
+	bool can_exit_do_loop = 0;
+	int loops = 0;
+	do
 	{
-		if (HERMES_PACKET_VERBOSITY > 1)
+		// reset temp buffer
+		memset(hermes_temp_buffer_bytes, 0, sizeof(hermes_temp_buffer_bytes));
+
+		// read usb to temp buffer
+		new_bytes_amount = hermes_read_usb_and_put_it_into_some_buffer(hermes_temp_buffer_bytes);
+
+		// parse new data
+		int buffer_ptr = 0;
+		uint8_t *source;
+		uint8_t *destination;
+		int length;
+
+		while (hermes_temp_buffer_bytes[buffer_ptr])
 		{
-			printf("-LOG- VERBOSE PACKET, hermes_packet_flush: Sucessfull:\n");
+			source = &hermes_temp_buffer_bytes[buffer_ptr];
+			destination = &hermes_recieve_buffer[current_command][0];
+			length = hermes_temp_buffer_bytes[buffer_ptr];
+			if (HERMES_PACKET_VERBOSITY > 1)
+			{
+				printf("-LOG- VERBOSE PACKET, hermes_packet_parse_USB: Copying len %i from %i to command nr %i\n", length, buffer_ptr, current_command);
+			}
+
+			memcpy(destination, source, length);
+			buffer_ptr += hermes_temp_buffer_bytes[buffer_ptr];
+			current_command++;
 		}
-	}
-	else
+
+		// check if last command is echo
+		if (memcmp(&hermes_recieve_buffer[current_command - 1][2], proprietary_echo_data, sizeof(proprietary_echo_data)) == 0)
+		{
+			can_exit_do_loop = 1;
+		}
+
+		loops++;
+
+	} while (!can_exit_do_loop);
+
+	// remove echo from buffer
+	for (int i = 0; i < HERMES_BUFFER_RECIEVE_MAX_LENGTH; i++)
 	{
-		printf("ERROR PACKET, hermes_packet_flush: The device didn't send the ping packet\n");
-		return -1;
+		hermes_recieve_buffer[current_command - 1][i] = 0;
 	}
+	if (HERMES_PACKET_VERBOSITY > 1)
+	{
+		printf("-LOG- VERBOSE PACKET, hermes_packet_flush: there were %i USB reading loops\n", loops);
+	}
+
+	return 1;
 }
 
 int hermes_packet_parse_USB()
@@ -225,10 +276,7 @@ int hermes_packet_parse_USB()
 	}
 
 	// reset temp buffer
-	for (int i = 0; i < sizeof(hermes_temp_buffer_bytes); i++)
-	{
-		hermes_temp_buffer_bytes[i] = 0;
-	}
+	memset(hermes_temp_buffer_bytes, 0, sizeof(hermes_temp_buffer_bytes));
 
 	// Read da data
 	int read_data_amount = hermes_read_usb_and_put_it_into_some_buffer(hermes_temp_buffer_bytes);
@@ -236,10 +284,7 @@ int hermes_packet_parse_USB()
 	if (read_data_amount)
 	{
 		// reset recieve buffer
-		for (int i = 0; i < sizeof(hermes_recieve_buffer); i++)
-		{
-			hermes_recieve_buffer[0][i] = 0;
-		}
+		memset(hermes_recieve_buffer, 0, sizeof(hermes_USB_recieve));
 
 		// Parse that data
 		int buffer_ptr = 0;

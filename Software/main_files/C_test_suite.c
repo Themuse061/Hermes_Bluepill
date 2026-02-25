@@ -9,7 +9,6 @@
 
 // uint8_t data
 uint8_t ping_data[] = {0x09, 0x04, 0xFF, 0xaa, 0x00, 0x11, 0x00, 0xaa, 0xFF};
-uint8_t echo_data[] = {0x17, 0x12, 0x10, 0xaa, 0xbb, 0xcc, 0xdd, 0x17, 0x02};
 
 uint8_t TCA9554_init[] = {TCA9554_REG_CONFIG, 0x00};
 uint8_t TCA9554_off[] = {TCA9554_REG_OUTPUT, 0x00};
@@ -151,22 +150,74 @@ int main()
 		print_array_in_hex(hermes_recieve_buffer[4], 16);
 	}
 
-	if (Test_echo)
+	if (Test_echo_add)
 	{
 
-		printf("\n\n=========== Testing echo ===========\n");
+		printf("\n\n=========== Test_echo_add ===========\n");
+
+		uint8_t echo_data[] = {0x17, 0x12, 0x10, 0xaa, 0xbb, 0xcc, 0xdd, 0x17, 0x02};
 
 		hermes_add_echo(echo_data, sizeof(echo_data));
-		uint8_t echo_return_data[sizeof(echo_data)];
 
-		// Hermes_Flush_Stack_with_Read(echo_return_data, sizeof(echo_return_data) + 2);
+		hermes_packet_flush_blind();
+		delay_ms(2000);
+		hermes_packet_parse_USB();
 
 		printf("sent: __ __ ");
 		print_array_in_hex(echo_data, sizeof(echo_data));
 
 		printf("read: ");
-		print_array_in_hex(echo_return_data, sizeof(echo_return_data) + 2);
+		print_array_in_hex(hermes_recieve_buffer[0], sizeof(echo_data) + 2);
 	}
+
+	if (Test_hermes_flush)
+	{
+		printf("\n\n=========== Test_hermes_flush ===========\n");
+
+		for (int i = 0; i < 5; i++)
+		{
+			hermes_add_ping();
+		}
+
+		printf("starting timer\n");
+		helper_start_timer(2);
+		printf("flushing buffer\n");
+		hermes_packet_flush();
+		printf("buffer flushed\n");
+		helper_end_timer(2);
+
+		printf("read data:\n");
+		for (int i = 0; i < HERMES_BUFFER_RECIEVE_STACK_MAX_HEIGHT; i++)
+		{
+			printf("%02d: ", i);
+			print_array_in_hex(hermes_recieve_buffer[i], 16);
+		}
+	}
+
+	if (Test_hermes_flush)
+	{
+		printf("\n\n=========== Test_hermes_flush_long ===========\n");
+
+		for (int i = 0; i < 15; i++)
+		{
+			hermes_add_ping();
+		}
+
+		printf("starting timer\n");
+		helper_start_timer(2);
+		printf("flushing buffer\n");
+		hermes_packet_flush();
+		printf("buffer flushed\n");
+		helper_end_timer(2);
+
+		printf("read data:\n");
+		for (int i = 0; i < HERMES_BUFFER_RECIEVE_STACK_MAX_HEIGHT; i++)
+		{
+			printf("%02d: ", i);
+			print_array_in_hex(hermes_recieve_buffer[i], 16);
+		}
+	}
+
 	/**
 		if (Test_TCA9554_I2C_write)
 		{

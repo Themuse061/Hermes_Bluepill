@@ -1,15 +1,25 @@
 #pragma once
 
-#define Test_ping_with_hermes_USB_sends 1
+#define Test_ping_with_hermes_USB_sends 0
 // Uses USB_drivers.c directly
-#define Test_ping_with_Hermes_stack_and_manual_read 1
+
+#define Test_ping_with_Hermes_stack_and_manual_read 0
 // Adds to stack, flushes and reads manually
-#define Test_ping_with_Hermes_parse_USB 1
+
+#define Test_ping_with_Hermes_parse_USB 0
 // Adds to stack, flushes and reads with parse USB
-#define Test_ping_with_Hermes_parse_USB_multiple_pings 1
+
+#define Test_ping_with_Hermes_parse_USB_multiple_pings 0
 // Adds multiple pings to stack, flushes and reads with parse USB
 
-#define Test_echo 0
+#define Test_echo_add 0
+// adds echo to stack and flushes blindly
+
+#define Test_hermes_flush 1
+// sends 5 pings and uses normal flush
+
+#define Test_hermes_flush_long 1
+// sends 15 pings and uses normal flush
 
 #define Test_TCA9554_I2C_write 0
 // Uses I2C write and command packing

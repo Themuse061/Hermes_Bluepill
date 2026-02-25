@@ -104,10 +104,11 @@ int hermes_USB_recieve(unsigned char *buffer, int length)
 
 int hermes_USB_check_recieve_buffer(void)
 {
-    if (HERMES_ADD_VERBOSITY_USB > 1)
-    {
-        printf("-LOG- VERBOSE USB, hermes_USB_check_recieve_buffer: Checking buffer length\n");
-    }
+    // Does thousands of prints if you poll
+    // if (HERMES_ADD_VERBOSITY_USB > 1)
+    // {
+    //     printf("-LOG- VERBOSE USB, hermes_USB_check_recieve_buffer: Checking buffer length\n");
+    // }
 
     if (port == NULL)
         return -1;
