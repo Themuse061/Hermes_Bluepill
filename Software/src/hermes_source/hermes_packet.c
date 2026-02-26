@@ -40,10 +40,7 @@ int hermes_packet_check_height_free()
 
 int hermes_packet_check_heigh_taken()
 {
-	if (HERMES_PACKET_VERBOSITY > 1)
-	{
-		printf("-LOG- VERBOSE PACKET, hermes_packet_check_heigh_taken: There are %i taken spaces\n", hermes_current_send_stack_position);
-	}
+
 	return hermes_current_send_stack_position;
 }
 

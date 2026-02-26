@@ -104,11 +104,11 @@ int hermes_add_I2C_read(uint8_t addr, uint8_t len);
 // functions for handling entire stack_add-send-wait routine in single line if you don't care about speed
 
 int hermes_send_I2C_write(uint8_t I2C_address, uint8_t *data, uint8_t len);
-int hermes_send_I2C_send_recieve();
+int hermes_send_I2C_send_recieve(uint8_t I2C_address, uint8_t write_len, uint8_t read_len, uint8_t *write_data);
 int hermes_send_echo(uint8_t *data, uint8_t len);
 int hermes_send_ping();
-int hermes_send_delay_ms();
-int hermes_send_I2C_read();
+int hermes_send_delay_ms(int delay);
+int hermes_send_I2C_read(uint8_t addr, uint8_t len);
 
 // -------------------- EASY BLOCK -------------------- //
 // Functions that abstrac more than the above
