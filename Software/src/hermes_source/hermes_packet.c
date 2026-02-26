@@ -265,7 +265,7 @@ int hermes_packet_flush()
 			length = hermes_temp_buffer_bytes[buffer_ptr];
 			if (HERMES_PACKET_VERBOSITY > 1)
 			{
-				printf("-LOG- VERBOSE PACKET, hermes_packet_parse_USB: Copying len %i from %i to command nr %i\n", length, buffer_ptr, current_command);
+				printf("-LOG- VERBOSE PACKET, hermes_packet_flush: Copying len %i from %i to command nr %i\n", length, buffer_ptr, current_command);
 			}
 
 			memcpy(destination, source, length);

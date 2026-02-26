@@ -6,7 +6,7 @@
 // -------------------- VERVOSITY SETTINGS -------------------- //
 // How much of printf'ing the functions do
 // 0 - errors, always printing
-// 1 - not used (warnings?)
+// 1 - warnings
 // 2 - verbose, each function does a print
 // 3 - dump, raw data dumps with each send and recieve
 
@@ -17,7 +17,7 @@
 
 #define HERMES_ADD_VERBOSITY_USB 0
 
-#define HERMES_SEND_VERBOSITY 0 // not implemented
+#define HERMES_SEND_VERBOSITY 0
 
 #define HERMES_EASY_VERBOSITY 0 // not implemented
 
@@ -103,9 +103,9 @@ int hermes_add_I2C_read(uint8_t addr, uint8_t len);
 // -------------------- SEND BLOCK -------------------- //
 // functions for handling entire stack_add-send-wait routine in single line if you don't care about speed
 
-int hermes_send_I2C_write();
+int hermes_send_I2C_write(uint8_t I2C_address, uint8_t *data, uint8_t len);
 int hermes_send_I2C_send_recieve();
-int hermes_send_echo();
+int hermes_send_echo(uint8_t *data, uint8_t len);
 int hermes_send_ping();
 int hermes_send_delay_ms();
 int hermes_send_I2C_read();

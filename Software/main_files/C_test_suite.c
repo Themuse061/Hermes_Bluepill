@@ -10,10 +10,6 @@
 // uint8_t data
 uint8_t ping_data[] = {0x09, 0x04, 0xFF, 0xaa, 0x00, 0x11, 0x00, 0xaa, 0xFF};
 
-uint8_t TCA9554_init[] = {TCA9554_REG_CONFIG, 0x00};
-uint8_t TCA9554_off[] = {TCA9554_REG_OUTPUT, 0x00};
-uint8_t TCA9554_on[] = {TCA9554_REG_OUTPUT, 0b00001111};
-
 uint8_t dummy1_ID_in_uint8[] = {dummy1_ID};
 uint8_t dummy1_data_read1[dummy1_len + 4];
 uint8_t dummy1_data_read2[dummy1_len + 4];
@@ -218,449 +214,489 @@ int main()
 		}
 	}
 
+	if (test_send_ping)
+	{
+		printf("\n\n=========== test_send_ping ===========\n");
+		hermes_send_ping();
+
+		printf("expe: ");
+		print_array_in_hex(ping_data, sizeof(ping_data));
+
+		printf("read: ");
+		print_array_in_hex(hermes_recieve_buffer[0], sizeof(ping_data));
+	}
+
+	if (test_send_echo)
+	{
+		printf("\n\n=========== test_send_echo ===========\n");
+
+		// variables
+		uint8_t test_send_echo_data[] = {0xcc, 0xab, 0x11, 0x12, 0x13, 0x00, 0xFF, 0xaa};
+
+		// code
+		hermes_send_echo(test_send_echo_data, sizeof(test_send_echo_data));
+
+		printf("expe: ");
+		print_array_in_hex(test_send_echo_data, sizeof(test_send_echo_data));
+
+		printf("read: ");
+		print_array_in_hex(&hermes_recieve_buffer[0][2], sizeof(test_send_echo_data));
+	}
+
+	if (Test_TCA9554_I2C_write)
+	{
+		printf("\n\n=========== Testing I2C write with TCA9554 ===========\n");
+
+		// variables
+		uint8_t TCA9554_init[] = {TCA9554_REG_CONFIG, 0x00};
+		uint8_t TCA9554_off[] = {TCA9554_REG_OUTPUT, 0x00};
+		uint8_t TCA9554_on[] = {TCA9554_REG_OUTPUT, 0b00001111};
+
+		// code
+
+		// init
+		printf("TCA init \n");
+		hermes_send_I2C_write(TCA9554_ADDR, TCA9554_init, 2);
+
+		// set to low
+		printf("setting low\n");
+		hermes_send_I2C_write(TCA9554_ADDR, TCA9554_off, 2);
+
+		// Set high
+		printf("setting high\n");
+		hermes_send_I2C_write(TCA9554_ADDR, TCA9554_on, 2);
+		delay_ms(2000);
+
+		// set low
+		printf("setting low\n");
+		hermes_send_I2C_write(TCA9554_ADDR, TCA9554_off, 2);
+		delay_ms(2000);
+
+		// Set high
+		printf("setting high\n");
+		hermes_send_I2C_write(TCA9554_ADDR, TCA9554_on, 2);
+		delay_ms(2000);
+
+		// set low
+		printf("setting low\n");
+		hermes_send_I2C_write(TCA9554_ADDR, TCA9554_off, 2);
+		delay_ms(2000);
+	}
+
+	if (Test_CH32V003_I2C_write_and_delay)
+	{
+		printf("\n\n=========== Testing I2C write with TCA9554 and delay ===========\n");
+
+		// variables
+		// variables
+		uint8_t TCA9554_init_delay[] = {TCA9554_REG_CONFIG, 0x00};
+		uint8_t TCA9554_off_delay[] = {TCA9554_REG_OUTPUT, 0x00};
+		uint8_t TCA9554_on_delay[] = {TCA9554_REG_OUTPUT, 0b00001111};
+
+		// code
+
+		hermes_add_I2C_write(TCA9554_ADDR, TCA9554_init_delay, 2); // init
+		hermes_add_I2C_write(TCA9554_ADDR, TCA9554_off_delay, 2);  // set low
+		hermes_add_delay_ms(200);								   // delay 200ms
+		hermes_add_I2C_write(TCA9554_ADDR, TCA9554_on_delay, 2);   // set high
+		hermes_add_delay_ms(200);								   // delay 200ms
+		hermes_add_I2C_write(TCA9554_ADDR, TCA9554_off_delay, 2);  // set low
+		hermes_add_delay_ms(200);								   // delay 200ms
+		hermes_add_I2C_write(TCA9554_ADDR, TCA9554_on_delay, 2);   // set high
+		hermes_add_delay_ms(200);								   // delay 200ms
+		hermes_add_I2C_write(TCA9554_ADDR, TCA9554_off_delay, 2);  // set low
+
+		hermes_packet_flush(); // flush stack
+	}
 	/**
-		if (Test_TCA9554_I2C_write)
-		{
-			printf("\n\n=========== Testing I2C write with TCA9554 ===========\n");
-
-			// init
-			hermes_add_I2C_write(TCA9554_ADDR, TCA9554_init, 2);
-
-			// set to low
-			hermes_add_I2C_write(TCA9554_ADDR, TCA9554_off, 2);
-
-			// send
-			Hermes_Flush_Stack();
-			delay_ms(2000);
-
-			// Set high
-			hermes_add_I2C_write(TCA9554_ADDR, TCA9554_on, 2);
-			Hermes_Flush_Stack();
-			delay_ms(2000);
-
-			// set low
-			hermes_add_I2C_write(TCA9554_ADDR, TCA9554_off, 2);
-			Hermes_Flush_Stack();
-			delay_ms(2000);
-
-			// Set high
-			hermes_add_I2C_write(TCA9554_ADDR, TCA9554_on, 2);
-			Hermes_Flush_Stack();
-			delay_ms(2000);
-
-			// set low
-			hermes_add_I2C_write(TCA9554_ADDR, TCA9554_off, 2);
-			Hermes_Flush_Stack();
-			delay_ms(2000);
-		}
-
-		if (Test_CH32V003_I2C_write_and_delay)
-		{
-			printf("\n\n=========== Testing I2C write with TCA9554 and delay ===========\n");
-			hermes_add_I2C_write(TCA9554_ADDR, TCA9554_init, 2);			   // init
-			hermes_add_I2C_write(TCA9554_ADDR, TCA9554_off, 2);				   // set low
-			hermes_add_delay_ms(200);										   // delay 200ms
-			hermes_add_I2C_write(TCA9554_ADDR, TCA9554_on, 2);				   // set high
-			hermes_add_delay_ms(200);										   // delay 200ms
-			hermes_add_I2C_write(TCA9554_ADDR, TCA9554_off, 2);				   // set low
-			hermes_add_delay_ms(200);										   // delay 200ms
-			hermes_add_I2C_write(TCA9554_ADDR, TCA9554_on, 2);				   // set high
-			hermes_add_delay_ms(200);										   // delay 200ms
-			hermes_add_I2C_write(TCA9554_ADDR, TCA9554_off, 2);				   // set low
-			hermes_add_delay_ms(200);										   // delay 200ms
-			printf("Current stack height: %i\n", Hermes_Check_Stack_Height()); // print stack height
-			Hermes_Flush_Stack();											   // flush stack
-			delay_ms(2000);													   // wait for commands to execute
-		}
-
-		if (Test_hot_plate_send_recieve)
-		{
-
-			printf("\n\n=========== Testing I2C send recieve with hotplate ===========\n");
-
-			// Write first set of data
-			hermes_add_I2C_write(Hot_plate_address, dummy1_data_write_1, sizeof(dummy1_data_write_1));
-			hermes_add_delay_ms(50);
-			hermes_add_I2C_write(Hot_plate_address, dummy2_data_write_1, sizeof(dummy2_data_write_1));
-			hermes_add_delay_ms(50);
-			hermes_add_I2C_write(Hot_plate_address, dummy3_data_write_1, sizeof(dummy3_data_write_1));
-			hermes_add_delay_ms(50);
-			Hermes_Flush_Stack();
-
-			printf("\n");
-			printf("Dummy 1 Write 1: __ __ __ ");
-			print_array_in_hex(dummy1_data_write_1, sizeof(dummy1_data_write_1));
-			printf("Dummy 2 Write 1: __ __ __ ");
-			print_array_in_hex(dummy2_data_write_1, sizeof(dummy2_data_write_1));
-			printf("Dummy 3 Write 1: __ __ __ ");
-			print_array_in_hex(dummy3_data_write_1, sizeof(dummy3_data_write_1));
-			delay_ms(2000);
-
-			// Read first set of data
-			hermes_add_I2C_send_recieve(Hot_plate_address, 1, dummy1_len, dummy1_ID_in_uint8);
-			Hermes_Flush_Stack_with_Read(dummy1_data_read1, sizeof(dummy1_data_read1));
-
-			hermes_add_I2C_send_recieve(Hot_plate_address, 1, dummy2_len, dummy2_ID_in_uint8);
-			Hermes_Flush_Stack_with_Read(dummy2_data_read1, sizeof(dummy2_data_read1));
-
-			hermes_add_I2C_send_recieve(Hot_plate_address, 1, dummy3_len, dummy3_ID_in_uint8);
-			Hermes_Flush_Stack_with_Read(dummy3_data_read1, sizeof(dummy3_data_read1));
-			printf("\n");
-			printf("Dummy 1 Read_ 1: ");
-			print_array_in_hex(dummy1_data_read1, sizeof(dummy1_data_read1));
-			printf("Dummy 2 Read_ 1: ");
-			print_array_in_hex(dummy2_data_read1, sizeof(dummy2_data_read1));
-			printf("Dummy 3 Read_ 1: ");
-			print_array_in_hex(dummy3_data_read1, sizeof(dummy3_data_read1));
-
-			// Write second set of data
-			hermes_add_I2C_write(Hot_plate_address, dummy1_data_write_2, sizeof(dummy1_data_write_2));
-			hermes_add_delay_ms(50);
-			hermes_add_I2C_write(Hot_plate_address, dummy2_data_write_2, sizeof(dummy2_data_write_2));
-			hermes_add_delay_ms(50);
-			hermes_add_I2C_write(Hot_plate_address, dummy3_data_write_2, sizeof(dummy3_data_write_2));
-			hermes_add_delay_ms(50);
-			Hermes_Flush_Stack();
-
-			printf("\n");
-			printf("Dummy 1 Write 2: __ __ __ ");
-			print_array_in_hex(dummy1_data_write_2, sizeof(dummy1_data_write_1));
-			printf("Dummy 2 Write 2: __ __ __ ");
-			print_array_in_hex(dummy2_data_write_2, sizeof(dummy2_data_write_2));
-			printf("Dummy 3 Write 2: __ __ __ ");
-			print_array_in_hex(dummy3_data_write_2, sizeof(dummy3_data_write_2));
-
-			delay_ms(2000);
-
-			// Read second set of data
-			hermes_add_I2C_send_recieve(Hot_plate_address, 1, dummy1_len, dummy1_ID_in_uint8);
-			Hermes_Flush_Stack_with_Read(dummy1_data_read2, sizeof(dummy1_data_read2));
-
-			hermes_add_I2C_send_recieve(Hot_plate_address, 1, dummy2_len, dummy2_ID_in_uint8);
-			Hermes_Flush_Stack_with_Read(dummy2_data_read2, sizeof(dummy2_data_read2));
-
-			hermes_add_I2C_send_recieve(Hot_plate_address, 1, dummy3_len, dummy3_ID_in_uint8);
-			Hermes_Flush_Stack_with_Read(dummy3_data_read2, sizeof(dummy3_data_read2));
-
-			printf("\n");
-			printf("Dummy 1 Read_ 2: ");
-			print_array_in_hex(dummy1_data_read2, sizeof(dummy1_data_read2));
-			printf("Dummy 2 Read_ 2: ");
-			print_array_in_hex(dummy2_data_read2, sizeof(dummy2_data_read2));
-			printf("Dummy 2 Read_ 2: ");
-			print_array_in_hex(dummy3_data_read2, sizeof(dummy3_data_read2));
-
-			// check if everything is good
-			int current_loop_bad = 0;
-			printf("agrigated results:\n");
-
-			// FIX: Start loop at 1 to skip the Command ID byte check
-			for (int i = 1; i < 9; i++)
-			{
-				current_loop_bad = 0;
-				printf("Loop %i: ", i);
-
-				if (i <= dummy1_len)
+				if (Test_hot_plate_send_recieve)
 				{
-					if (dummy1_data_write_1[i] != dummy1_data_read1[i + 3])
-					{
-						current_loop_bad = 1;
-						printf("D1 W1; ");
-					}
 
-					if (dummy1_data_write_2[i] != dummy1_data_read2[i + 3])
+					printf("\n\n=========== Testing I2C send recieve with hotplate ===========\n");
+
+					// Write first set of data
+					hermes_add_I2C_write(Hot_plate_address, dummy1_data_write_1, sizeof(dummy1_data_write_1));
+					hermes_add_delay_ms(50);
+					hermes_add_I2C_write(Hot_plate_address, dummy2_data_write_1, sizeof(dummy2_data_write_1));
+					hermes_add_delay_ms(50);
+					hermes_add_I2C_write(Hot_plate_address, dummy3_data_write_1, sizeof(dummy3_data_write_1));
+					hermes_add_delay_ms(50);
+					Hermes_Flush_Stack();
+
+					printf("\n");
+					printf("Dummy 1 Write 1: __ __ __ ");
+					print_array_in_hex(dummy1_data_write_1, sizeof(dummy1_data_write_1));
+					printf("Dummy 2 Write 1: __ __ __ ");
+					print_array_in_hex(dummy2_data_write_1, sizeof(dummy2_data_write_1));
+					printf("Dummy 3 Write 1: __ __ __ ");
+					print_array_in_hex(dummy3_data_write_1, sizeof(dummy3_data_write_1));
+					delay_ms(2000);
+
+					// Read first set of data
+					hermes_add_I2C_send_recieve(Hot_plate_address, 1, dummy1_len, dummy1_ID_in_uint8);
+					Hermes_Flush_Stack_with_Read(dummy1_data_read1, sizeof(dummy1_data_read1));
+
+					hermes_add_I2C_send_recieve(Hot_plate_address, 1, dummy2_len, dummy2_ID_in_uint8);
+					Hermes_Flush_Stack_with_Read(dummy2_data_read1, sizeof(dummy2_data_read1));
+
+					hermes_add_I2C_send_recieve(Hot_plate_address, 1, dummy3_len, dummy3_ID_in_uint8);
+					Hermes_Flush_Stack_with_Read(dummy3_data_read1, sizeof(dummy3_data_read1));
+					printf("\n");
+					printf("Dummy 1 Read_ 1: ");
+					print_array_in_hex(dummy1_data_read1, sizeof(dummy1_data_read1));
+					printf("Dummy 2 Read_ 1: ");
+					print_array_in_hex(dummy2_data_read1, sizeof(dummy2_data_read1));
+					printf("Dummy 3 Read_ 1: ");
+					print_array_in_hex(dummy3_data_read1, sizeof(dummy3_data_read1));
+
+					// Write second set of data
+					hermes_add_I2C_write(Hot_plate_address, dummy1_data_write_2, sizeof(dummy1_data_write_2));
+					hermes_add_delay_ms(50);
+					hermes_add_I2C_write(Hot_plate_address, dummy2_data_write_2, sizeof(dummy2_data_write_2));
+					hermes_add_delay_ms(50);
+					hermes_add_I2C_write(Hot_plate_address, dummy3_data_write_2, sizeof(dummy3_data_write_2));
+					hermes_add_delay_ms(50);
+					Hermes_Flush_Stack();
+
+					printf("\n");
+					printf("Dummy 1 Write 2: __ __ __ ");
+					print_array_in_hex(dummy1_data_write_2, sizeof(dummy1_data_write_1));
+					printf("Dummy 2 Write 2: __ __ __ ");
+					print_array_in_hex(dummy2_data_write_2, sizeof(dummy2_data_write_2));
+					printf("Dummy 3 Write 2: __ __ __ ");
+					print_array_in_hex(dummy3_data_write_2, sizeof(dummy3_data_write_2));
+
+					delay_ms(2000);
+
+					// Read second set of data
+					hermes_add_I2C_send_recieve(Hot_plate_address, 1, dummy1_len, dummy1_ID_in_uint8);
+					Hermes_Flush_Stack_with_Read(dummy1_data_read2, sizeof(dummy1_data_read2));
+
+					hermes_add_I2C_send_recieve(Hot_plate_address, 1, dummy2_len, dummy2_ID_in_uint8);
+					Hermes_Flush_Stack_with_Read(dummy2_data_read2, sizeof(dummy2_data_read2));
+
+					hermes_add_I2C_send_recieve(Hot_plate_address, 1, dummy3_len, dummy3_ID_in_uint8);
+					Hermes_Flush_Stack_with_Read(dummy3_data_read2, sizeof(dummy3_data_read2));
+
+					printf("\n");
+					printf("Dummy 1 Read_ 2: ");
+					print_array_in_hex(dummy1_data_read2, sizeof(dummy1_data_read2));
+					printf("Dummy 2 Read_ 2: ");
+					print_array_in_hex(dummy2_data_read2, sizeof(dummy2_data_read2));
+					printf("Dummy 2 Read_ 2: ");
+					print_array_in_hex(dummy3_data_read2, sizeof(dummy3_data_read2));
+
+					// check if everything is good
+					int current_loop_bad = 0;
+					printf("agrigated results:\n");
+
+					// FIX: Start loop at 1 to skip the Command ID byte check
+					for (int i = 1; i < 9; i++)
 					{
-						current_loop_bad = 1;
-						printf("D1 W2; ");
+						current_loop_bad = 0;
+						printf("Loop %i: ", i);
+
+						if (i <= dummy1_len)
+						{
+							if (dummy1_data_write_1[i] != dummy1_data_read1[i + 3])
+							{
+								current_loop_bad = 1;
+								printf("D1 W1; ");
+							}
+
+							if (dummy1_data_write_2[i] != dummy1_data_read2[i + 3])
+							{
+								current_loop_bad = 1;
+								printf("D1 W2; ");
+							}
+						}
+
+						if (i <= dummy2_len)
+						{
+							if (dummy2_data_write_1[i] != dummy2_data_read1[i + 3])
+							{
+								current_loop_bad = 1;
+								printf("D2 W1; ");
+							}
+
+							if (dummy2_data_write_2[i] != dummy2_data_read2[i + 3])
+							{
+								current_loop_bad = 1;
+								printf("D2 W2; ");
+							}
+						}
+						if (i <= dummy3_len)
+						{
+							if (dummy3_data_write_1[i] != dummy3_data_read1[i + 3])
+							{
+								current_loop_bad = 1;
+								printf("D3 W1; ");
+							}
+
+							if (dummy3_data_write_2[i] != dummy3_data_read2[i + 3])
+							{
+								current_loop_bad = 1;
+								printf("D3 W2; ");
+							}
+						}
+
+						if (!current_loop_bad)
+						{
+							printf("Everything good!");
+						}
+
+						printf("\n");
 					}
 				}
 
-				if (i <= dummy2_len)
+				if (Test_hot_plate_send_and_read)
 				{
-					if (dummy2_data_write_1[i] != dummy2_data_read1[i + 3])
+					printf("\n\n=========== Testing I2C Read and Write with hotplate ===========\n");
+
+					// Write first set of data
+					hermes_add_I2C_write(Hot_plate_address, dummy1_data_write_1, sizeof(dummy1_data_write_1));
+					hermes_add_delay_ms(50);
+					hermes_add_I2C_write(Hot_plate_address, dummy2_data_write_1, sizeof(dummy2_data_write_1));
+					hermes_add_delay_ms(50);
+					hermes_add_I2C_write(Hot_plate_address, dummy3_data_write_1, sizeof(dummy3_data_write_1));
+					hermes_add_delay_ms(50);
+					Hermes_Flush_Stack();
+
+					printf("\n");
+					printf("Dummy 1 Write 1: __ __ __ ");
+					print_array_in_hex(dummy1_data_write_1, sizeof(dummy1_data_write_1));
+					printf("Dummy 2 Write 1: __ __ __ ");
+					print_array_in_hex(dummy2_data_write_1, sizeof(dummy2_data_write_1));
+					printf("Dummy 3 Write 1: __ __ __ ");
+					print_array_in_hex(dummy3_data_write_1, sizeof(dummy3_data_write_1));
+					delay_ms(2000);
+
+					// Read first set of data
+					hermes_add_I2C_write(Hot_plate_address, dummy1_ID_in_uint8, 1);
+					hermes_add_I2C_read(Hot_plate_address, dummy1_len);
+					Hermes_Flush_Stack_with_Read(dummy1_data_read1, sizeof(dummy1_data_read1));
+
+					hermes_add_I2C_write(Hot_plate_address, dummy2_ID_in_uint8, 1);
+					hermes_add_I2C_read(Hot_plate_address, dummy2_len);
+					Hermes_Flush_Stack_with_Read(dummy2_data_read1, sizeof(dummy2_data_read1));
+
+					hermes_add_I2C_write(Hot_plate_address, dummy3_ID_in_uint8, 1);
+					hermes_add_I2C_read(Hot_plate_address, dummy3_len);
+					Hermes_Flush_Stack_with_Read(dummy3_data_read1, sizeof(dummy3_data_read1));
+					printf("\n");
+					printf("Dummy 1 Read_ 1: ");
+					print_array_in_hex(dummy1_data_read1, sizeof(dummy1_data_read1));
+					printf("Dummy 2 Read_ 1: ");
+					print_array_in_hex(dummy2_data_read1, sizeof(dummy2_data_read1));
+					printf("Dummy 3 Read_ 1: ");
+					print_array_in_hex(dummy3_data_read1, sizeof(dummy3_data_read1));
+
+					// Write second set of data
+					hermes_add_I2C_write(Hot_plate_address, dummy1_data_write_2, sizeof(dummy1_data_write_2));
+					hermes_add_delay_ms(50);
+					hermes_add_I2C_write(Hot_plate_address, dummy2_data_write_2, sizeof(dummy2_data_write_2));
+					hermes_add_delay_ms(50);
+					hermes_add_I2C_write(Hot_plate_address, dummy3_data_write_2, sizeof(dummy3_data_write_2));
+					hermes_add_delay_ms(50);
+					Hermes_Flush_Stack();
+
+					printf("\n");
+					printf("Dummy 1 Write 2: __ __ __ ");
+					print_array_in_hex(dummy1_data_write_2, sizeof(dummy1_data_write_1));
+					printf("Dummy 2 Write 2: __ __ __ ");
+					print_array_in_hex(dummy2_data_write_2, sizeof(dummy2_data_write_2));
+					printf("Dummy 3 Write 2: __ __ __ ");
+					print_array_in_hex(dummy3_data_write_2, sizeof(dummy3_data_write_2));
+
+					delay_ms(2000);
+
+					// Read second set of data
+					hermes_add_I2C_write(Hot_plate_address, dummy1_ID_in_uint8, 1);
+					hermes_add_I2C_read(Hot_plate_address, dummy1_len);
+					Hermes_Flush_Stack_with_Read(dummy1_data_read2, sizeof(dummy1_data_read2));
+
+					hermes_add_I2C_write(Hot_plate_address, dummy2_ID_in_uint8, 1);
+					hermes_add_I2C_read(Hot_plate_address, dummy2_len);
+					Hermes_Flush_Stack_with_Read(dummy2_data_read2, sizeof(dummy2_data_read2));
+
+					hermes_add_I2C_write(Hot_plate_address, dummy3_ID_in_uint8, 1);
+					hermes_add_I2C_read(Hot_plate_address, dummy3_len);
+					Hermes_Flush_Stack_with_Read(dummy3_data_read2, sizeof(dummy3_data_read2));
+
+					printf("\n");
+					printf("Dummy 1 Read_ 2: ");
+					print_array_in_hex(dummy1_data_read2, sizeof(dummy1_data_read2));
+					printf("Dummy 2 Read_ 2: ");
+					print_array_in_hex(dummy2_data_read2, sizeof(dummy2_data_read2));
+					printf("Dummy 2 Read_ 2: ");
+					print_array_in_hex(dummy3_data_read2, sizeof(dummy3_data_read2));
+
+					// check if everything is good
+					int current_loop_bad = 0;
+					printf("agrigated results:\n");
+
+					// FIX: Start loop at 1 to skip the Command ID byte check
+					for (int i = 1; i < 9; i++)
 					{
-						current_loop_bad = 1;
-						printf("D2 W1; ");
-					}
+						current_loop_bad = 0;
+						printf("Loop %i: ", i);
 
-					if (dummy2_data_write_2[i] != dummy2_data_read2[i + 3])
-					{
-						current_loop_bad = 1;
-						printf("D2 W2; ");
-					}
-				}
-				if (i <= dummy3_len)
-				{
-					if (dummy3_data_write_1[i] != dummy3_data_read1[i + 3])
-					{
-						current_loop_bad = 1;
-						printf("D3 W1; ");
-					}
+						if (i <= dummy1_len)
+						{
+							if (dummy1_data_write_1[i] != dummy1_data_read1[i + 3])
+							{
+								current_loop_bad = 1;
+								printf("D1 W1; ");
+							}
 
-					if (dummy3_data_write_2[i] != dummy3_data_read2[i + 3])
-					{
-						current_loop_bad = 1;
-						printf("D3 W2; ");
-					}
-				}
+							if (dummy1_data_write_2[i] != dummy1_data_read2[i + 3])
+							{
+								current_loop_bad = 1;
+								printf("D1 W2; ");
+							}
+						}
 
-				if (!current_loop_bad)
-				{
-					printf("Everything good!");
-				}
+						if (i <= dummy2_len)
+						{
+							if (dummy2_data_write_1[i] != dummy2_data_read1[i + 3])
+							{
+								current_loop_bad = 1;
+								printf("D2 W1; ");
+							}
 
-				printf("\n");
-			}
-		}
+							if (dummy2_data_write_2[i] != dummy2_data_read2[i + 3])
+							{
+								current_loop_bad = 1;
+								printf("D2 W2; ");
+							}
+						}
+						if (i <= dummy3_len)
+						{
+							if (dummy3_data_write_1[i] != dummy3_data_read1[i + 3])
+							{
+								current_loop_bad = 1;
+								printf("D3 W1; ");
+							}
 
-		if (Test_hot_plate_send_and_read)
-		{
-			printf("\n\n=========== Testing I2C Read and Write with hotplate ===========\n");
+							if (dummy3_data_write_2[i] != dummy3_data_read2[i + 3])
+							{
+								current_loop_bad = 1;
+								printf("D3 W2; ");
+							}
+						}
 
-			// Write first set of data
-			hermes_add_I2C_write(Hot_plate_address, dummy1_data_write_1, sizeof(dummy1_data_write_1));
-			hermes_add_delay_ms(50);
-			hermes_add_I2C_write(Hot_plate_address, dummy2_data_write_1, sizeof(dummy2_data_write_1));
-			hermes_add_delay_ms(50);
-			hermes_add_I2C_write(Hot_plate_address, dummy3_data_write_1, sizeof(dummy3_data_write_1));
-			hermes_add_delay_ms(50);
-			Hermes_Flush_Stack();
+						if (!current_loop_bad)
+						{
+							printf("Everything good!");
+						}
 
-			printf("\n");
-			printf("Dummy 1 Write 1: __ __ __ ");
-			print_array_in_hex(dummy1_data_write_1, sizeof(dummy1_data_write_1));
-			printf("Dummy 2 Write 1: __ __ __ ");
-			print_array_in_hex(dummy2_data_write_1, sizeof(dummy2_data_write_1));
-			printf("Dummy 3 Write 1: __ __ __ ");
-			print_array_in_hex(dummy3_data_write_1, sizeof(dummy3_data_write_1));
-			delay_ms(2000);
-
-			// Read first set of data
-			hermes_add_I2C_write(Hot_plate_address, dummy1_ID_in_uint8, 1);
-			hermes_add_I2C_read(Hot_plate_address, dummy1_len);
-			Hermes_Flush_Stack_with_Read(dummy1_data_read1, sizeof(dummy1_data_read1));
-
-			hermes_add_I2C_write(Hot_plate_address, dummy2_ID_in_uint8, 1);
-			hermes_add_I2C_read(Hot_plate_address, dummy2_len);
-			Hermes_Flush_Stack_with_Read(dummy2_data_read1, sizeof(dummy2_data_read1));
-
-			hermes_add_I2C_write(Hot_plate_address, dummy3_ID_in_uint8, 1);
-			hermes_add_I2C_read(Hot_plate_address, dummy3_len);
-			Hermes_Flush_Stack_with_Read(dummy3_data_read1, sizeof(dummy3_data_read1));
-			printf("\n");
-			printf("Dummy 1 Read_ 1: ");
-			print_array_in_hex(dummy1_data_read1, sizeof(dummy1_data_read1));
-			printf("Dummy 2 Read_ 1: ");
-			print_array_in_hex(dummy2_data_read1, sizeof(dummy2_data_read1));
-			printf("Dummy 3 Read_ 1: ");
-			print_array_in_hex(dummy3_data_read1, sizeof(dummy3_data_read1));
-
-			// Write second set of data
-			hermes_add_I2C_write(Hot_plate_address, dummy1_data_write_2, sizeof(dummy1_data_write_2));
-			hermes_add_delay_ms(50);
-			hermes_add_I2C_write(Hot_plate_address, dummy2_data_write_2, sizeof(dummy2_data_write_2));
-			hermes_add_delay_ms(50);
-			hermes_add_I2C_write(Hot_plate_address, dummy3_data_write_2, sizeof(dummy3_data_write_2));
-			hermes_add_delay_ms(50);
-			Hermes_Flush_Stack();
-
-			printf("\n");
-			printf("Dummy 1 Write 2: __ __ __ ");
-			print_array_in_hex(dummy1_data_write_2, sizeof(dummy1_data_write_1));
-			printf("Dummy 2 Write 2: __ __ __ ");
-			print_array_in_hex(dummy2_data_write_2, sizeof(dummy2_data_write_2));
-			printf("Dummy 3 Write 2: __ __ __ ");
-			print_array_in_hex(dummy3_data_write_2, sizeof(dummy3_data_write_2));
-
-			delay_ms(2000);
-
-			// Read second set of data
-			hermes_add_I2C_write(Hot_plate_address, dummy1_ID_in_uint8, 1);
-			hermes_add_I2C_read(Hot_plate_address, dummy1_len);
-			Hermes_Flush_Stack_with_Read(dummy1_data_read2, sizeof(dummy1_data_read2));
-
-			hermes_add_I2C_write(Hot_plate_address, dummy2_ID_in_uint8, 1);
-			hermes_add_I2C_read(Hot_plate_address, dummy2_len);
-			Hermes_Flush_Stack_with_Read(dummy2_data_read2, sizeof(dummy2_data_read2));
-
-			hermes_add_I2C_write(Hot_plate_address, dummy3_ID_in_uint8, 1);
-			hermes_add_I2C_read(Hot_plate_address, dummy3_len);
-			Hermes_Flush_Stack_with_Read(dummy3_data_read2, sizeof(dummy3_data_read2));
-
-			printf("\n");
-			printf("Dummy 1 Read_ 2: ");
-			print_array_in_hex(dummy1_data_read2, sizeof(dummy1_data_read2));
-			printf("Dummy 2 Read_ 2: ");
-			print_array_in_hex(dummy2_data_read2, sizeof(dummy2_data_read2));
-			printf("Dummy 2 Read_ 2: ");
-			print_array_in_hex(dummy3_data_read2, sizeof(dummy3_data_read2));
-
-			// check if everything is good
-			int current_loop_bad = 0;
-			printf("agrigated results:\n");
-
-			// FIX: Start loop at 1 to skip the Command ID byte check
-			for (int i = 1; i < 9; i++)
-			{
-				current_loop_bad = 0;
-				printf("Loop %i: ", i);
-
-				if (i <= dummy1_len)
-				{
-					if (dummy1_data_write_1[i] != dummy1_data_read1[i + 3])
-					{
-						current_loop_bad = 1;
-						printf("D1 W1; ");
-					}
-
-					if (dummy1_data_write_2[i] != dummy1_data_read2[i + 3])
-					{
-						current_loop_bad = 1;
-						printf("D1 W2; ");
-					}
-				}
-
-				if (i <= dummy2_len)
-				{
-					if (dummy2_data_write_1[i] != dummy2_data_read1[i + 3])
-					{
-						current_loop_bad = 1;
-						printf("D2 W1; ");
-					}
-
-					if (dummy2_data_write_2[i] != dummy2_data_read2[i + 3])
-					{
-						current_loop_bad = 1;
-						printf("D2 W2; ");
-					}
-				}
-				if (i <= dummy3_len)
-				{
-					if (dummy3_data_write_1[i] != dummy3_data_read1[i + 3])
-					{
-						current_loop_bad = 1;
-						printf("D3 W1; ");
-					}
-
-					if (dummy3_data_write_2[i] != dummy3_data_read2[i + 3])
-					{
-						current_loop_bad = 1;
-						printf("D3 W2; ");
+						printf("\n");
 					}
 				}
 
-				if (!current_loop_bad)
+				if (CH32V003_bootloader_jump_testing)
 				{
-					printf("Everything good!");
+					// reset
+					hermes_easy_I2C_reset(Ch32V003_bootloader_jump_testing_addr);
+
+					// jump to boot
+					hermes_easy_I2C_jump_to_bootloader(Ch32V003_bootloader_jump_testing_addr);
+					delay_ms(3000);
+
+					// reset
+					hermes_easy_I2C_reset(Ch32V003_bootloader_jump_testing_boot_addr);
+
+					// reset
+					hermes_easy_I2C_reset(Ch32V003_bootloader_jump_testing_addr);
 				}
 
-				printf("\n");
-			}
-		}
+				if (CH32V003_bootloader_get_version_testing)
+				{
+					printf("\n\n=========== Testing CH32V003 Bootloader get version  ===========\n");
 
-		if (CH32V003_bootloader_jump_testing)
-		{
-			// reset
-			hermes_easy_I2C_reset(Ch32V003_bootloader_jump_testing_addr);
+					hermes_easy_I2C_jump_to_bootloader(CH32V003_bootloader_get_version_testing_addr);
 
-			// jump to boot
-			hermes_easy_I2C_jump_to_bootloader(Ch32V003_bootloader_jump_testing_addr);
-			delay_ms(3000);
+					uint8_t bootloader_get_version_send_recieve_packet[] = {Command_ID_I2C_Slave_Flash_Get_Version};
+					uint8_t bootloader_get_version_send_recieve_buffer[16];
+					uint8_t bootloader_get_data_to_read_amount = 8;
 
-			// reset
-			hermes_easy_I2C_reset(Ch32V003_bootloader_jump_testing_boot_addr);
+					uint8_t bootloader_get_version_write[] = {Command_ID_I2C_Slave_Flash_Get_Version};
 
-			// reset
-			hermes_easy_I2C_reset(Ch32V003_bootloader_jump_testing_addr);
-		}
+					hermes_add_I2C_write(CH32V003_bootloader_get_version_testing_addr, bootloader_get_version_write, 1);
+					Hermes_Flush_Stack();
 
-		if (CH32V003_bootloader_get_version_testing)
-		{
-			printf("\n\n=========== Testing CH32V003 Bootloader get version  ===========\n");
+					delay_ms(500);
+					hermes_add_I2C_send_recieve(CH32V003_bootloader_get_version_testing_addr, 1, bootloader_get_data_to_read_amount, bootloader_get_version_send_recieve_packet);
+					Hermes_Flush_Stack_with_Read(bootloader_get_version_send_recieve_buffer, sizeof(bootloader_get_version_send_recieve_buffer));
+					printf("Bootloader version:\n");
+					print_array_in_hex(&bootloader_get_version_send_recieve_buffer[0], 8);
+					printf("\n");
 
-			hermes_easy_I2C_jump_to_bootloader(CH32V003_bootloader_get_version_testing_addr);
+					delay_ms(500);
 
-			uint8_t bootloader_get_version_send_recieve_packet[] = {Command_ID_I2C_Slave_Flash_Get_Version};
-			uint8_t bootloader_get_version_send_recieve_buffer[16];
-			uint8_t bootloader_get_data_to_read_amount = 8;
+					hermes_easy_I2C_reset(CH32V003_bootloader_get_version_testing_addr);
+				}
 
-			uint8_t bootloader_get_version_write[] = {Command_ID_I2C_Slave_Flash_Get_Version};
+				if (CH32V003_FLASH_read_testing)
+				{
+					printf("\n\n=========== Testing CH32V003 Bootloader Flash Reading ===========\n");
 
-			hermes_add_I2C_write(CH32V003_bootloader_get_version_testing_addr, bootloader_get_version_write, 1);
-			Hermes_Flush_Stack();
+					// Variables
+					int flash_start_sth = Flash_Start;
+					uint16_t Flash_pointer = flash_start_sth;
 
-			delay_ms(500);
-			hermes_add_I2C_send_recieve(CH32V003_bootloader_get_version_testing_addr, 1, bootloader_get_data_to_read_amount, bootloader_get_version_send_recieve_packet);
-			Hermes_Flush_Stack_with_Read(bootloader_get_version_send_recieve_buffer, sizeof(bootloader_get_version_send_recieve_buffer));
-			printf("Bootloader version:\n");
-			print_array_in_hex(&bootloader_get_version_send_recieve_buffer[0], 8);
-			printf("\n");
+					// Write Packets
+					uint8_t Flash_read_write_flash_pointer_command[] = {4, Command_ID_I2C_Slave_Flash_Set_Pointer, 0, 0, 0, 0};
+					uint8_t Flash_read_ask_for_read[] = {2, Command_ID_I2C_Slave_Flash_Read_Page};
+					uint8_t Flash_read_read_register[] = {Command_ID_I2C_Slave_Flash_Read_Page};
 
-			delay_ms(500);
+					// Read Buffers
+					uint8_t flash_read[128] = {0};
 
-			hermes_easy_I2C_reset(CH32V003_bootloader_get_version_testing_addr);
-		}
+					// 1. Jump to Bootloader
+					printf("Reseting...\n");
+					hermes_easy_I2C_reset(CH32V003_FLASH_read_testing_addr);
+					printf("Jumping to bootloader...\n");
+					hermes_easy_I2C_jump_to_bootloader(CH32V003_FLASH_read_testing_addr);
+					delay_ms(100);
 
-		if (CH32V003_FLASH_read_testing)
-		{
-			printf("\n\n=========== Testing CH32V003 Bootloader Flash Reading ===========\n");
+					for (int i = 0; i < 5; i++)
+					{
+						// Set flash pointer
+						Flash_pointer = flash_start_sth + i;
+						Flash_read_write_flash_pointer_command[2] = Flash_pointer & 0xFF; // low byte
+						Flash_read_write_flash_pointer_command[3] = (Flash_pointer >> 8) & 0xFF;
+						Flash_read_write_flash_pointer_command[2] = (Flash_pointer >> 16) & 0xFF;
+						Flash_read_write_flash_pointer_command[3] = (Flash_pointer >> 24) & 0xFF; // high byte
 
-			// Variables
-			int flash_start_sth = Flash_Start;
-			uint16_t Flash_pointer = flash_start_sth;
+						// send the flash pointer
+						printf("Writing the flash pointer...\n");
+						hermes_add_I2C_write(CH32V003_FLASH_read_testing_addr, Flash_read_write_flash_pointer_command, 6);
+						Hermes_Flush_Stack();
+						delay_ms(100);
 
-			// Write Packets
-			uint8_t Flash_read_write_flash_pointer_command[] = {4, Command_ID_I2C_Slave_Flash_Set_Pointer, 0, 0, 0, 0};
-			uint8_t Flash_read_ask_for_read[] = {2, Command_ID_I2C_Slave_Flash_Read_Page};
-			uint8_t Flash_read_read_register[] = {Command_ID_I2C_Slave_Flash_Read_Page};
+						// read back the flash pointer
+						// Ask for a read
+						printf("Asking for a FLASH read ...\n");
+						hermes_add_I2C_write(CH32V003_FLASH_read_testing_addr, Flash_read_ask_for_read, 2);
+						Hermes_Flush_Stack();
+						delay_ms(100);
 
-			// Read Buffers
-			uint8_t flash_read[128] = {0};
+						// read the data
+						printf("Reading data...\n");
+						hermes_add_I2C_send_recieve(CH32V003_FLASH_read_testing_addr, 1, 2, Flash_read_read_register);
+						Hermes_Flush_Stack_with_Read(flash_read, 16);
+						delay_ms(100);
 
-			// 1. Jump to Bootloader
-			printf("Reseting...\n");
-			hermes_easy_I2C_reset(CH32V003_FLASH_read_testing_addr);
-			printf("Jumping to bootloader...\n");
-			hermes_easy_I2C_jump_to_bootloader(CH32V003_FLASH_read_testing_addr);
-			delay_ms(100);
+						// display the data
+						printf("Packet nr %i: ", i);
+						print_array_in_hex(flash_read, 16 + 4);
+					}
 
-			for (int i = 0; i < 5; i++)
-			{
-				// Set flash pointer
-				Flash_pointer = flash_start_sth + i;
-				Flash_read_write_flash_pointer_command[2] = Flash_pointer & 0xFF; // low byte
-				Flash_read_write_flash_pointer_command[3] = (Flash_pointer >> 8) & 0xFF;
-				Flash_read_write_flash_pointer_command[2] = (Flash_pointer >> 16) & 0xFF;
-				Flash_read_write_flash_pointer_command[3] = (Flash_pointer >> 24) & 0xFF; // high byte
-
-				// send the flash pointer
-				printf("Writing the flash pointer...\n");
-				hermes_add_I2C_write(CH32V003_FLASH_read_testing_addr, Flash_read_write_flash_pointer_command, 6);
-				Hermes_Flush_Stack();
-				delay_ms(100);
-
-				// read back the flash pointer
-				// Ask for a read
-				printf("Asking for a FLASH read ...\n");
-				hermes_add_I2C_write(CH32V003_FLASH_read_testing_addr, Flash_read_ask_for_read, 2);
-				Hermes_Flush_Stack();
-				delay_ms(100);
-
-				// read the data
-				printf("Reading data...\n");
-				hermes_add_I2C_send_recieve(CH32V003_FLASH_read_testing_addr, 1, 2, Flash_read_read_register);
-				Hermes_Flush_Stack_with_Read(flash_read, 16);
-				delay_ms(100);
-
-				// display the data
-				printf("Packet nr %i: ", i);
-				print_array_in_hex(flash_read, 16 + 4);
-			}
-
-			printf("Reseting...\n");
-			hermes_easy_I2C_reset(CH32V003_FLASH_read_testing_addr);
-		}
-	 */
+					printf("Reseting...\n");
+					hermes_easy_I2C_reset(CH32V003_FLASH_read_testing_addr);
+				}
+			 */
 	// Cleanup
 	printf("\n\n\n");
 	hermes_USB_deinit();
