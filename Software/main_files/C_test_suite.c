@@ -485,21 +485,21 @@ int main()
 		delay_ms(2000);
 
 		// Read first set of data
-		hermes_add_I2C_write(Hot_plate_address, dummy1_ID_in_uint8, 1);
+		hermes_send_I2C_write(Hot_plate_address, dummy1_ID_in_uint8, 1);
 		hermes_send_I2C_read(Hot_plate_address, dummy1_len);
 		destination = dummy1_data_read1;
 		source = hermes_recieve_buffer[0];
 		length = sizeof(dummy1_data_read1);
 		memcpy(destination, source, length);
 
-		hermes_add_I2C_write(Hot_plate_address, dummy2_ID_in_uint8, 1);
+		hermes_send_I2C_write(Hot_plate_address, dummy2_ID_in_uint8, 1);
 		hermes_send_I2C_read(Hot_plate_address, dummy2_len);
 		destination = dummy2_data_read1;
 		source = hermes_recieve_buffer[0];
 		length = sizeof(dummy2_data_read1);
 		memcpy(destination, source, length);
 
-		hermes_add_I2C_write(Hot_plate_address, dummy3_ID_in_uint8, 1);
+		hermes_send_I2C_write(Hot_plate_address, dummy3_ID_in_uint8, 1);
 		hermes_send_I2C_read(Hot_plate_address, dummy3_len);
 		destination = dummy3_data_read1;
 		source = hermes_recieve_buffer[0];
@@ -530,21 +530,21 @@ int main()
 		delay_ms(2000);
 
 		// Read second set of data
-		hermes_add_I2C_write(Hot_plate_address, dummy1_ID_in_uint8, 1);
+		hermes_send_I2C_write(Hot_plate_address, dummy1_ID_in_uint8, 1);
 		hermes_send_I2C_read(Hot_plate_address, dummy1_len);
 		destination = dummy1_data_read2;
 		source = hermes_recieve_buffer[0];
 		length = sizeof(dummy1_data_read2);
 		memcpy(destination, source, length);
 
-		hermes_add_I2C_write(Hot_plate_address, dummy2_ID_in_uint8, 1);
+		hermes_send_I2C_write(Hot_plate_address, dummy2_ID_in_uint8, 1);
 		hermes_send_I2C_read(Hot_plate_address, dummy2_len);
 		destination = dummy2_data_read2;
 		source = hermes_recieve_buffer[0];
 		length = sizeof(dummy2_data_read2);
 		memcpy(destination, source, length);
 
-		hermes_add_I2C_write(Hot_plate_address, dummy3_ID_in_uint8, 1);
+		hermes_send_I2C_write(Hot_plate_address, dummy3_ID_in_uint8, 1);
 		hermes_send_I2C_read(Hot_plate_address, dummy3_len);
 		destination = dummy3_data_read2;
 		source = hermes_recieve_buffer[0];

@@ -45,8 +45,8 @@
 #define dummy2_len 8
 #define dummy3_len 3
 
-#define Test_hot_plate_send_recieve 1
-#define Test_hot_plate_send_and_read 0
+#define Test_hot_plate_send_recieve 0
+#define Test_hot_plate_send_and_read 1
 
 /// To be implemented --------------------------------------
 #define CH32V003_bootloader_jump_testing 0

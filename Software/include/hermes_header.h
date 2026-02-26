@@ -17,9 +17,9 @@
 
 #define HERMES_ADD_VERBOSITY_USB 0
 
-#define HERMES_SEND_VERBOSITY 0
+#define HERMES_SEND_VERBOSITY 4
 
-#define HERMES_EASY_VERBOSITY 0 // not implemented
+#define HERMES_EASY_VERBOSITY 4 // not implemented
 
 /*
 print template

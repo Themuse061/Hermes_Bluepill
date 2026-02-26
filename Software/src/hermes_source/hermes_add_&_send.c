@@ -100,7 +100,7 @@ int hermes_add_I2C_write(uint8_t I2C_address, uint8_t *data, uint8_t len)
 
 	if (HERMES_SEND_VERBOSITY > 1)
 	{
-		printf("-LOG- VERBOSE SEND, hermes_add_I2C_write: Adding I2C write to stack\n-LOG- ");
+		printf("-LOG- VERBOSE SEND: Adding I2C write to stack\n-LOG- ");
 		printf(" %02X", I2C_address);
 		for (int i = 0; i < len + 2; i++)
 		{
