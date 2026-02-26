@@ -16,28 +16,21 @@ int hermes_add_ping(void)
 
 int hermes_add_echo(uint8_t *data, uint8_t len)
 {
-	uint8_t echo_packet[HERMES_BUFFER_SEND_MAX_LENGTH] = {};
+	uint8_t echo_header[] = {len + 2, Command_ID_USB_Device_Echo};
 
-	echo_packet[0] = len + 2;
-	echo_packet[1] = Command_ID_USB_Device_Echo;
-
-	uint8_t *source = data;
-	uint8_t *destination = &echo_packet[2];
-	int length = len;
-
-	memcpy(destination, source, length);
+	hermes_packet_add_comand_without_advancing_stack_height(echo_header, 2);
 
 	if (HERMES_VERBOSITY_USB > 1)
 	{
 		printf("-LOG- VERBOSE PACKET: Adding echo to stack\n");
 		for (int i = 0; i < len + 2; i++)
 		{
-			printf(" %02X", echo_packet[i]);
+			printf(" %02X", data[i]);
 		}
 		printf("\n");
 	}
 
-	return hermes_packet_add_comand(echo_packet, len + 2);
+	return hermes_packet_add_comand(data, len);
 }
 
 int hermes_send_ping(void)
@@ -58,7 +51,7 @@ int hermes_send_ping(void)
 	else
 	{
 
-		printf("ERROR PACKET, send_ping: There is already a command in stack\n");
+		printf("-LOG- ERROR PACKET, send_ping: There is already a command in stack\n");
 		return -1;
 	}
 }

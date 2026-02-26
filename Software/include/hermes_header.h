@@ -5,14 +5,15 @@
 
 // -------------------- VERVOSITY SETTINGS -------------------- //
 // How much of printf'ing the functions do
-// 0 - errors
-// 1 -> not used (warnings?)
+// 0 - errors, always printing
+// 1 - not used (warnings?)
 // 2 - verbose, each function does a print
+// 3 - dump, raw data dumps with each send and recieve
 
 #define HERMES_VERBOSITY_USB 0
 // opening ports, sending packets, reading buffer
 
-#define HERMES_PACKET_VERBOSITY 0
+#define HERMES_PACKET_VERBOSITY 3
 
 #define HERMES_ADD_VERBOSITY_USB 0
 
@@ -86,6 +87,8 @@ int hermes_packet_check_heigh_taken();
 /// @brief
 /// adds a command to command buffer
 int hermes_packet_add_comand(uint8_t *command_array, int len);
+
+int hermes_packet_add_comand_without_advancing_stack_height(uint8_t *command_array, int len);
 
 // -------------------- ADD BLOCK -------------------- //
 // Adding functions to command buffer

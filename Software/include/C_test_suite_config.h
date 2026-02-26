@@ -12,7 +12,7 @@
 #define Test_ping_with_Hermes_parse_USB_multiple_pings 0
 // Adds multiple pings to stack, flushes and reads with parse USB
 
-#define Test_echo_add 0
+#define Test_echo_add 1
 // adds echo to stack and flushes blindly
 
 #define Test_hermes_flush 1
