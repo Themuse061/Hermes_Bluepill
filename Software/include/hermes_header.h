@@ -10,16 +10,16 @@
 // 2 - verbose, each function does a print
 // 3 - dump, raw data dumps with each send and recieve
 
-#define HERMES_VERBOSITY_USB 0
+#define HERMES_VERBOSITY_USB 1
 // opening ports, sending packets, reading buffer
 
-#define HERMES_PACKET_VERBOSITY 3
+#define HERMES_PACKET_VERBOSITY 1
 
-#define HERMES_ADD_VERBOSITY_USB 0
+#define HERMES_ADD_VERBOSITY_USB 1
 
-#define HERMES_SEND_VERBOSITY 4
+#define HERMES_SEND_VERBOSITY 1
 
-#define HERMES_EASY_VERBOSITY 4 // not implemented
+#define HERMES_EASY_VERBOSITY 1
 
 /*
 print template

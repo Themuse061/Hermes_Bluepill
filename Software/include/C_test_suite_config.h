@@ -46,14 +46,14 @@
 #define dummy3_len 3
 
 #define Test_hot_plate_send_recieve 0
-#define Test_hot_plate_send_and_read 1
+#define Test_hot_plate_send_and_read 0
 
 /// To be implemented --------------------------------------
-#define CH32V003_bootloader_jump_testing 0
+#define CH32V003_bootloader_jump_testing 1
 #define Ch32V003_bootloader_jump_testing_addr 0x48
 #define Ch32V003_bootloader_jump_testing_boot_addr 0x48
 
-#define CH32V003_bootloader_get_version_testing 0
+#define CH32V003_bootloader_get_version_testing 1
 #define CH32V003_bootloader_get_version_testing_addr 0x48
 
 #define FLASH_READ_SIZE 64

@@ -621,7 +621,7 @@ int main()
 			printf("\n");
 		}
 	}
-	/**
+
 	if (CH32V003_bootloader_jump_testing)
 	{
 		// reset
@@ -642,89 +642,83 @@ int main()
 	{
 		printf("\n\n=========== Testing CH32V003 Bootloader get version  ===========\n");
 
-		hermes_easy_I2C_jump_to_bootloader(CH32V003_bootloader_get_version_testing_addr);
-
+		// variables
 		uint8_t bootloader_get_version_send_recieve_packet[] = {Command_ID_I2C_Slave_Flash_Get_Version};
-		uint8_t bootloader_get_version_send_recieve_buffer[16];
 		uint8_t bootloader_get_data_to_read_amount = 8;
-
 		uint8_t bootloader_get_version_write[] = {Command_ID_I2C_Slave_Flash_Get_Version};
 
-		hermes_add_I2C_write(CH32V003_bootloader_get_version_testing_addr, bootloader_get_version_write, 1);
-		Hermes_Flush_Stack();
-
-		delay_ms(500);
-		hermes_add_I2C_send_recieve(CH32V003_bootloader_get_version_testing_addr, 1, bootloader_get_data_to_read_amount, bootloader_get_version_send_recieve_packet);
-		Hermes_Flush_Stack_with_Read(bootloader_get_version_send_recieve_buffer, sizeof(bootloader_get_version_send_recieve_buffer));
+		// code
+		hermes_easy_I2C_jump_to_bootloader(CH32V003_bootloader_get_version_testing_addr);
+		hermes_send_I2C_write(CH32V003_bootloader_get_version_testing_addr, bootloader_get_version_write, 1);
+		delay_ms(50);
+		hermes_send_I2C_send_recieve(CH32V003_bootloader_get_version_testing_addr, 1, bootloader_get_data_to_read_amount, bootloader_get_version_send_recieve_packet);
 		printf("Bootloader version:\n");
-		print_array_in_hex(&bootloader_get_version_send_recieve_buffer[0], 8);
+		print_array_in_hex(hermes_recieve_buffer[0], 8);
 		printf("\n");
-
-		delay_ms(500);
-
 		hermes_easy_I2C_reset(CH32V003_bootloader_get_version_testing_addr);
 	}
 
-	if (CH32V003_FLASH_read_testing)
-	{
-		printf("\n\n=========== Testing CH32V003 Bootloader Flash Reading ===========\n");
-
-		// Variables
-		int flash_start_sth = Flash_Start;
-		uint16_t Flash_pointer = flash_start_sth;
-
-		// Write Packets
-		uint8_t Flash_read_write_flash_pointer_command[] = {4, Command_ID_I2C_Slave_Flash_Set_Pointer, 0, 0, 0, 0};
-		uint8_t Flash_read_ask_for_read[] = {2, Command_ID_I2C_Slave_Flash_Read_Page};
-		uint8_t Flash_read_read_register[] = {Command_ID_I2C_Slave_Flash_Read_Page};
-
-		// Read Buffers
-		uint8_t flash_read[128] = {0};
-
-		// 1. Jump to Bootloader
-		printf("Reseting...\n");
-		hermes_easy_I2C_reset(CH32V003_FLASH_read_testing_addr);
-		printf("Jumping to bootloader...\n");
-		hermes_easy_I2C_jump_to_bootloader(CH32V003_FLASH_read_testing_addr);
-		delay_ms(100);
-
-		for (int i = 0; i < 5; i++)
+	/**
+		if (CH32V003_FLASH_read_testing)
 		{
-			// Set flash pointer
-			Flash_pointer = flash_start_sth + i;
-			Flash_read_write_flash_pointer_command[2] = Flash_pointer & 0xFF; // low byte
-			Flash_read_write_flash_pointer_command[3] = (Flash_pointer >> 8) & 0xFF;
-			Flash_read_write_flash_pointer_command[2] = (Flash_pointer >> 16) & 0xFF;
-			Flash_read_write_flash_pointer_command[3] = (Flash_pointer >> 24) & 0xFF; // high byte
+			printf("\n\n=========== Testing CH32V003 Bootloader Flash Reading ===========\n");
 
-			// send the flash pointer
-			printf("Writing the flash pointer...\n");
-			hermes_add_I2C_write(CH32V003_FLASH_read_testing_addr, Flash_read_write_flash_pointer_command, 6);
-			Hermes_Flush_Stack();
+			// Variables
+			int flash_start_sth = Flash_Start;
+			uint16_t Flash_pointer = flash_start_sth;
+
+			// Write Packets
+			uint8_t Flash_read_write_flash_pointer_command[] = {4, Command_ID_I2C_Slave_Flash_Set_Pointer, 0, 0, 0, 0};
+			uint8_t Flash_read_ask_for_read[] = {2, Command_ID_I2C_Slave_Flash_Read_Page};
+			uint8_t Flash_read_read_register[] = {Command_ID_I2C_Slave_Flash_Read_Page};
+
+			// Read Buffers
+			uint8_t flash_read[128] = {0};
+
+			// 1. Jump to Bootloader
+			printf("Reseting...\n");
+			hermes_easy_I2C_reset(CH32V003_FLASH_read_testing_addr);
+			printf("Jumping to bootloader...\n");
+			hermes_easy_I2C_jump_to_bootloader(CH32V003_FLASH_read_testing_addr);
 			delay_ms(100);
 
-			// read back the flash pointer
-			// Ask for a read
-			printf("Asking for a FLASH read ...\n");
-			hermes_add_I2C_write(CH32V003_FLASH_read_testing_addr, Flash_read_ask_for_read, 2);
-			Hermes_Flush_Stack();
-			delay_ms(100);
+			for (int i = 0; i < 5; i++)
+			{
+				// Set flash pointer
+				Flash_pointer = flash_start_sth + i;
+				Flash_read_write_flash_pointer_command[2] = Flash_pointer & 0xFF; // low byte
+				Flash_read_write_flash_pointer_command[3] = (Flash_pointer >> 8) & 0xFF;
+				Flash_read_write_flash_pointer_command[2] = (Flash_pointer >> 16) & 0xFF;
+				Flash_read_write_flash_pointer_command[3] = (Flash_pointer >> 24) & 0xFF; // high byte
 
-			// read the data
-			printf("Reading data...\n");
-			hermes_add_I2C_send_recieve(CH32V003_FLASH_read_testing_addr, 1, 2, Flash_read_read_register);
-			Hermes_Flush_Stack_with_Read(flash_read, 16);
-			delay_ms(100);
+				// send the flash pointer
+				printf("Writing the flash pointer...\n");
+				hermes_add_I2C_write(CH32V003_FLASH_read_testing_addr, Flash_read_write_flash_pointer_command, 6);
+				Hermes_Flush_Stack();
+				delay_ms(100);
 
-			// display the data
-			printf("Packet nr %i: ", i);
-			print_array_in_hex(flash_read, 16 + 4);
+				// read back the flash pointer
+				// Ask for a read
+				printf("Asking for a FLASH read ...\n");
+				hermes_add_I2C_write(CH32V003_FLASH_read_testing_addr, Flash_read_ask_for_read, 2);
+				Hermes_Flush_Stack();
+				delay_ms(100);
+
+				// read the data
+				printf("Reading data...\n");
+				hermes_add_I2C_send_recieve(CH32V003_FLASH_read_testing_addr, 1, 2, Flash_read_read_register);
+				Hermes_Flush_Stack_with_Read(flash_read, 16);
+				delay_ms(100);
+
+				// display the data
+				printf("Packet nr %i: ", i);
+				print_array_in_hex(flash_read, 16 + 4);
+			}
+
+			printf("Reseting...\n");
+			hermes_easy_I2C_reset(CH32V003_FLASH_read_testing_addr);
 		}
-
-		printf("Reseting...\n");
-		hermes_easy_I2C_reset(CH32V003_FLASH_read_testing_addr);
-	}
-	*/
+		*/
 	// Cleanup
 	printf("\n\n\n");
 	hermes_USB_deinit();
