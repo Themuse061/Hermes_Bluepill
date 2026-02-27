@@ -49,7 +49,7 @@
 #define Test_hot_plate_send_and_read 0
 
 /// To be implemented --------------------------------------
-#define CH32V003_bootloader_jump_testing 1
+#define CH32V003_bootloader_jump_testing 0
 #define Ch32V003_bootloader_jump_testing_addr 0x48
 #define Ch32V003_bootloader_jump_testing_boot_addr 0x48
 
@@ -60,5 +60,6 @@
 #define FLASH_PAGE_AMOUNT 256
 #define Flash_Start 0x08000000
 
-#define CH32V003_FLASH_read_testing 0
+#define CH32V003_FLASH_read_testing 1
+#define CH32V003_FLASH_read_testing_verbose 0 // log commands on 1 or just dump flash on 0
 #define CH32V003_FLASH_read_testing_addr 0x48

@@ -45,7 +45,7 @@ Pin 8           PD1 SWIO
 volatile uint8_t i2c_buffer[I2C_BUFFER_SIZE];
 volatile uint32_t flash_pointer = 0x08000000;
 volatile uint8_t need_to_write = 0;
-uint8_t bootloader_version[] = {0x01, 0x00, 0x01, 0x01};
+uint8_t bootloader_version[] = {0x12, 0x34, 0x56, 0x78};
 
 volatile bool master_sent_Flash_Read_Page;
 volatile bool master_sent_Flash_Write_Page;
@@ -67,16 +67,6 @@ void raw_reset()
     PFIC->SCTLR = (1 << 31) | (1 << 2);
     while (1)
         ;
-}
-
-uint8_t safe_flash_read()
-{
-
-    if (flash_pointer >= FLASH_START && flash_pointer < FLASH_END)
-    {
-        return *(uint8_t *)flash_pointer;
-    }
-    return 0xCA; // Return dummy data instead of crashing
 }
 
 void Enable_I2C(bool state)
@@ -113,15 +103,14 @@ void onWrite(uint8_t reg, uint8_t length)
 
     // Command 0x02: Set Pointer
     case Command_ID_I2C_Slave_Flash_Set_Pointer:
-        if (length >= 2) // Ensure we actually got 2 bytes
-        {
-            // lower byte in [0], higher in [4]
-            flash_pointer = 0;
-            flash_pointer |= (i2c_buffer[Command_ID_I2C_Slave_Flash_Set_Pointer + 0]) << 0; // low byte first
-            flash_pointer |= (i2c_buffer[Command_ID_I2C_Slave_Flash_Set_Pointer + 1]) << 8;
-            flash_pointer |= (i2c_buffer[Command_ID_I2C_Slave_Flash_Set_Pointer + 2]) << 16;
-            flash_pointer |= (i2c_buffer[Command_ID_I2C_Slave_Flash_Set_Pointer + 3]) << 24;
-        }
+
+        // lower byte in [0], higher in [4]
+        flash_pointer = 0;
+        flash_pointer |= (i2c_buffer[Command_ID_I2C_Slave_Flash_Set_Pointer + 0]) << 0; // low byte first
+        flash_pointer |= (i2c_buffer[Command_ID_I2C_Slave_Flash_Set_Pointer + 1]) << 8;
+        flash_pointer |= (i2c_buffer[Command_ID_I2C_Slave_Flash_Set_Pointer + 2]) << 16;
+        flash_pointer |= (i2c_buffer[Command_ID_I2C_Slave_Flash_Set_Pointer + 3]) << 24;
+
         break;
 
     case Command_ID_I2C_Slave_Flash_Get_Version:
@@ -225,11 +214,18 @@ int main()
 
         if (master_sent_Flash_Read_Page)
         {
-            // Put flash pointer into buffer for debbuging
-            i2c_buffer[Command_ID_I2C_Slave_Flash_Read_Page + 0] = ((flash_pointer) & 0xff); // low byte
-            i2c_buffer[Command_ID_I2C_Slave_Flash_Read_Page + 1] = (flash_pointer >> 8) & 0xFF;
-            i2c_buffer[Command_ID_I2C_Slave_Flash_Read_Page + 2] = (flash_pointer >> 16) & 0xFF;
-            i2c_buffer[Command_ID_I2C_Slave_Flash_Read_Page + 3] = (flash_pointer >> 24) & 0xFF; // high byte
+            // 1. Convert the integer into a real pointer
+            uint8_t *real_flash_ptr = (uint8_t *)flash_pointer;
+
+            // 2. Load 64 bytes into the I2C buffer
+            for (int i = 0; i < 64; i++)
+            {
+                // Read the flash memory and put it in the buffer
+                i2c_buffer[Command_ID_I2C_Slave_Flash_Read_Page + i] = *real_flash_ptr;
+
+                // Increment the pointer to get the next byte of flash
+                real_flash_ptr++;
+            }
 
             master_sent_Flash_Read_Page = 0;
             Enable_I2C(1);
@@ -244,7 +240,7 @@ int main()
         {
             for (int i = 0; i < 4; i++)
             {
-                i2c_buffer[0x16 + i] = bootloader_version[i];
+                i2c_buffer[Command_ID_I2C_Slave_Flash_Get_Version + i] = bootloader_version[i];
             }
             master_sent_Flash_Get_Version = 0;
             Enable_I2C(1);
