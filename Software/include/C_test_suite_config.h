@@ -60,6 +60,6 @@
 #define FLASH_PAGE_AMOUNT 256
 #define Flash_Start 0x08000000
 
-#define CH32V003_FLASH_read_testing 1
+#define CH32V003_FLASH_read_testing 1 // takes ~20min
 #define CH32V003_FLASH_read_testing_verbose 0 // log commands on 1 or just dump flash on 0
 #define CH32V003_FLASH_read_testing_addr 0x48
