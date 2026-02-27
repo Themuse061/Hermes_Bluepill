@@ -226,6 +226,7 @@ int main()
                 // Increment the pointer to get the next byte of flash
                 real_flash_ptr++;
             }
+            flash_pointer += 64;
 
             master_sent_Flash_Read_Page = 0;
             Enable_I2C(1);

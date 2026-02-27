@@ -120,3 +120,7 @@ int hermes_easy_I2C_reset(uint8_t addr);
 /// @brief
 /// Sends a I2C write with Command_ID_I2C_Slave_Jump_To_Bootloader
 int hermes_easy_I2C_jump_to_bootloader(uint8_t addr);
+
+int hermes_easy_I2C_add_send_flash_pointer(uint8_t addr, uint32_t pointer);
+int hermes_easy_I2C_add_read_flash(uint8_t addr, int amount);
+int hermes_easy_i2C_add_write_flash_64_bytes(uint8_t addr, uint8_t *data);

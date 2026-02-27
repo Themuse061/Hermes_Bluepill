@@ -26,5 +26,41 @@ int hermes_easy_I2C_jump_to_bootloader(uint8_t addr)
 	hermes_add_I2C_write(addr, command_reset, 1);			   // reset
 	hermes_add_delay_ms(250);								   // wait 250ms
 	hermes_add_I2C_write(addr, command_jump_to_bootloader, 1); // try to jump
-	hermes_packet_flush();
+	return hermes_packet_flush();
 }
+
+int hermes_easy_I2C_add_send_flash_pointer(uint8_t addr, uint32_t Flash_pointer)
+{
+	if (HERMES_EASY_VERBOSITY > 1)
+	{
+		printf("-LOG- VERBOSE EASY, hermes_easy_I2C_add_send_flash_pointer: addr 0x%02X, pointer %02X \n", addr, Flash_pointer);
+	}
+
+	uint8_t command_set_pointer[] = {Command_ID_I2C_Slave_Flash_Set_Pointer, 0, 0, 0, 0};
+	command_set_pointer[1] = Flash_pointer & 0xFF; // low byte
+	command_set_pointer[2] = (Flash_pointer >> 8) & 0xFF;
+	command_set_pointer[3] = (Flash_pointer >> 16) & 0xFF;
+	command_set_pointer[4] = (Flash_pointer >> 24) & 0xFF; // high byte
+
+	return hermes_add_I2C_write(addr, command_set_pointer, 5);
+}
+
+// takes 3 command slots
+int hermes_easy_I2C_add_read_flash(uint8_t addr, int amount)
+{
+	if (HERMES_EASY_VERBOSITY > 1)
+	{
+		printf("-LOG- VERBOSE EASY, hermes_easy_I2C_add_read_flash: addr 0x%02X, amount %i \n", addr, amount);
+	}
+
+	// ask for a write
+	uint8_t Flash_read_ask_for_read[] = {Command_ID_I2C_Slave_Flash_Read_Page};
+	hermes_add_I2C_write(addr, Flash_read_ask_for_read, 1);
+	hermes_add_delay_ms(50);
+
+	// read the write
+	hermes_add_I2C_send_recieve(addr, 1, amount, Flash_read_ask_for_read);
+	return 1;
+}
+
+int hermes_easy_i2C_add_write_flash_64_bytes(uint8_t addr, uint8_t *data)

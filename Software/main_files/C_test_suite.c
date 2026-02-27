@@ -747,6 +747,95 @@ int main()
 		hermes_easy_I2C_reset(CH32V003_FLASH_read_testing_addr);
 	}
 
+	if (CH32V003_FLASH_easy_read_testing)
+	{
+		printf("\n\n=========== CH32V003_FLASH_easy_read_testing ===========\n");
+
+		// variables
+		uint32_t easy_read_flash_pointer = Flash_Start;
+
+		// code
+
+		printf("Reseting...\n");
+		hermes_easy_I2C_reset(CH32V003_FLASH_easy_read_testing_addr);
+
+		printf("Jumping to bootloader...\n");
+		hermes_easy_I2C_jump_to_bootloader(CH32V003_FLASH_easy_read_testing_addr);
+
+		printf("writing flash pointer: %02X\n", Flash_Start);
+		hermes_easy_I2C_add_send_flash_pointer(CH32V003_FLASH_easy_read_testing_addr, Flash_Start);
+
+		for (int i = 0; i < FLASH_PAGE_AMOUNT / CH32V003_FLASH_easy_read_testing_reads_in_packet; i++)
+		{
+
+			// add the reads
+			for (int i = 0; i < CH32V003_FLASH_easy_read_testing_reads_in_packet; i++)
+			{
+				hermes_easy_I2C_add_read_flash(CH32V003_FLASH_easy_read_testing_addr, FLASH_READ_SIZE);
+			}
+
+			// execute the reads
+			hermes_packet_flush();
+
+			// parse the reads
+			// 1. Only ONE loop to iterate through the packets we actually received
+			for (int j = 0; j < CH32V003_FLASH_easy_read_testing_reads_in_packet; j++)
+			{
+				// 2. Each packet is FLASH_READ_SIZE (64 bytes).
+				// We split those 64 bytes into rows of 16 bytes for a pretty dump.
+				for (int row = 0; row < FLASH_READ_SIZE; row += 16)
+				{
+					// Print the Address for this specific line
+					printf("%08X: ", (unsigned int)(easy_read_flash_pointer + row));
+
+					// Print 16 bytes of data
+					for (int col = 0; col < 16; col++)
+					{
+						// [j] is the packet index
+						// [row + col + 4] is the byte inside that packet
+						// (+4 skips the Hermes/I2C header bytes)
+						printf("%02X ", hermes_recieve_buffer[j][row + col + 4]);
+					}
+
+					// Move to the next line in the terminal
+					printf("\n");
+				}
+
+				// 3. IMPORTANT: After printing all rows for ONE packet,
+				// advance the pointer by 64 so the next packet starts at the right address.
+				easy_read_flash_pointer += FLASH_READ_SIZE;
+			}
+		}
+
+		printf("Reseting\n");
+		hermes_easy_I2C_reset(CH32V003_FLASH_easy_read_testing_addr);
+		printf("Done\n");
+	}
+
+	if (CH32V003_FLASH_WRITE_testing)
+	{
+		printf("\n\n=========== CH32V003_FLASH_WRITE_testing ===========\n");
+
+		// variables
+
+		// code
+
+		// send the flash pointer
+		// read
+
+		// send the flash pointer
+		// write
+		// wait
+		// send the flash pointer
+		// read
+
+		// send the flash pointer
+		// write
+		// wait
+		// send the flash pointer
+		// read
+	}
+
 	// Cleanup
 	printf("\n\n\n");
 	hermes_USB_deinit();
