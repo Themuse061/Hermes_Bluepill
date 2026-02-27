@@ -64,3 +64,26 @@ int hermes_easy_I2C_add_read_flash(uint8_t addr, int amount)
 }
 
 int hermes_easy_i2C_add_write_flash_64_bytes(uint8_t addr, uint8_t *data)
+
+{
+
+	if (HERMES_EASY_VERBOSITY > 1)
+	{
+		printf("-LOG- VERBOSE EASY, hermes_easy_i2C_add_write_flash_64_bytes: addr 0x%02X, data ", addr);
+		for (int i = 0; i < 64; i++)
+		{
+			printf("%02X ", data[i]);
+		}
+		printf("\n");
+	}
+
+	uint8_t flash_write_packet[65];
+	flash_write_packet[0] = Command_ID_I2C_Slave_Flash_Write_Page;
+
+	uint8_t *destination = &flash_write_packet[1];
+	uint8_t *source = data;
+	int length = 64;
+	memcpy(destination, source, length);
+
+	return hermes_add_I2C_write(addr, data, 65);
+}

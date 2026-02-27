@@ -817,23 +817,102 @@ int main()
 		printf("\n\n=========== CH32V003_FLASH_WRITE_testing ===========\n");
 
 		// variables
+		uint8_t flash_write_testing_first_write[64] = {
+			// First 16 bytes: 10, 11, 12...
+			0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
+			0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F,
+			// Random data (48 bytes)
+			0x4F, 0x92, 0xBC, 0x07, 0xE2, 0x33, 0xA8, 0x5D,
+			0x61, 0xCF, 0x14, 0x8A, 0x2B, 0x90, 0xFD, 0x44,
+			0x3E, 0x76, 0xBB, 0x21, 0x09, 0xEF, 0x55, 0x82,
+			0xCC, 0x1D, 0x47, 0x30, 0x6E, 0x9A, 0xB3, 0x5C,
+			0x7F, 0x02, 0xD4, 0x29, 0x8B, 0x67, 0x11, 0xA5,
+			0xEE, 0x38, 0x4D, 0x22, 0x91, 0x0C, 0xF6, 0x84};
 
+		uint8_t flash_write_testing_second_write[64] = {
+			// First 16 bytes: A0, A1, A2...
+			0xA0, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6, 0xA7,
+			0xA8, 0xA9, 0xAA, 0xAB, 0xAC, 0xAD, 0xAE, 0xAF,
+			// Random data (48 bytes)
+			0x23, 0xDE, 0x4B, 0x81, 0x59, 0x17, 0xFC, 0x30,
+			0x96, 0x2C, 0x7E, 0x0D, 0xB5, 0x4F, 0xA2, 0x63,
+			0x18, 0x88, 0x39, 0x9D, 0x2F, 0xCB, 0x64, 0x50,
+			0x0E, 0xFB, 0x71, 0xD3, 0x42, 0x19, 0x8C, 0xA4,
+			0x57, 0x6E, 0x20, 0x3B, 0x94, 0xBD, 0x01, 0xEE,
+			0x4A, 0xC5, 0x87, 0x32, 0x1F, 0x66, 0x92, 0xDD};
 		// code
 
-		// send the flash pointer
-		// read
+		printf("Reseting...\n");
+		hermes_easy_I2C_reset(CH32V003_FLASH_WRITE_addr);
+
+		printf("Jumping to bootloader...\n");
+		hermes_easy_I2C_jump_to_bootloader(CH32V003_FLASH_WRITE_addr);
 
 		// send the flash pointer
-		// write
-		// wait
-		// send the flash pointer
+		printf("writing flash pointer: %02X\n", CH32V003_FLASH_WRITE_Flash_addres_for_test);
+		hermes_easy_I2C_add_send_flash_pointer(CH32V003_FLASH_WRITE_addr, CH32V003_FLASH_WRITE_Flash_addres_for_test);
+		hermes_packet_flush();
+
 		// read
+		printf("reading flash: ");
+		hermes_easy_I2C_add_read_flash(CH32V003_FLASH_WRITE_addr, 64);
+		hermes_packet_flush();
+		print_array_in_hex(&hermes_recieve_buffer[0][4], 64);
 
 		// send the flash pointer
+		printf("writing flash pointer: %02X\n", CH32V003_FLASH_WRITE_Flash_addres_for_test);
+		hermes_easy_I2C_add_send_flash_pointer(CH32V003_FLASH_WRITE_addr, CH32V003_FLASH_WRITE_Flash_addres_for_test);
+		hermes_packet_flush();
+
 		// write
+		printf("writing flash:");
+		print_array_in_hex(flash_write_testing_first_write, 64);
+		hermes_easy_i2C_add_write_flash_64_bytes(CH32V003_FLASH_WRITE_addr, flash_write_testing_first_write);
+		hermes_packet_flush();
+		printf("write done\n");
+
 		// wait
+		delay_ms(5000);
+
 		// send the flash pointer
+		printf("writing flash pointer: %02X\n", CH32V003_FLASH_WRITE_Flash_addres_for_test);
+		hermes_easy_I2C_add_send_flash_pointer(CH32V003_FLASH_WRITE_addr, CH32V003_FLASH_WRITE_Flash_addres_for_test);
+		hermes_packet_flush();
+
 		// read
+		printf("reading flash: ");
+		hermes_easy_I2C_add_read_flash(CH32V003_FLASH_WRITE_addr, 64);
+		hermes_packet_flush();
+		print_array_in_hex(&hermes_recieve_buffer[0][4], 64);
+
+		// send the flash pointer
+		printf("writing flash pointer: %02X\n", CH32V003_FLASH_WRITE_Flash_addres_for_test);
+		hermes_easy_I2C_add_send_flash_pointer(CH32V003_FLASH_WRITE_addr, CH32V003_FLASH_WRITE_Flash_addres_for_test);
+		hermes_packet_flush();
+
+		// write
+		printf("writing flash: ");
+		print_array_in_hex(flash_write_testing_second_write, 64);
+		hermes_easy_i2C_add_write_flash_64_bytes(CH32V003_FLASH_WRITE_addr, flash_write_testing_second_write);
+		hermes_packet_flush();
+		printf("write done\n");
+
+		// wait
+		delay_ms(5000);
+
+		// send the flash pointer
+		printf("writing flash pointer: %02X\n", CH32V003_FLASH_WRITE_Flash_addres_for_test);
+		hermes_easy_I2C_add_send_flash_pointer(CH32V003_FLASH_WRITE_addr, CH32V003_FLASH_WRITE_Flash_addres_for_test);
+		hermes_packet_flush();
+
+		// read
+		printf("reading flash: ");
+		hermes_easy_I2C_add_read_flash(CH32V003_FLASH_WRITE_addr, 64);
+		hermes_packet_flush();
+		print_array_in_hex(&hermes_recieve_buffer[0][4], 64);
+
+		printf("Reseting...\n");
+		hermes_easy_I2C_reset(CH32V003_FLASH_WRITE_addr);
 	}
 
 	// Cleanup

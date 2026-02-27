@@ -233,8 +233,64 @@ int main()
         }
 
         if (master_sent_Flash_Write_Page)
+        {
 
-        { // Flash the flash
+            if (master_sent_Flash_Write_Page)
+            {
+                // 1. Convert the integer pointer into a 32-bit pointer (Flash writes are word-aligned)
+                uint32_t *real_flash_ptr = (uint32_t *)flash_pointer;
+
+                // 2. Locate the data in the I2C buffer (cast to uint32_t pointer for 4-byte access)
+                uint32_t *data_to_write = (uint32_t *)&i2c_buffer[Command_ID_I2C_Slave_Flash_Write_Page];
+
+                // --- STEP A: Erase the Page ---
+                // On CH32, you must erase a page before you can write new data to it
+                FLASH->CTLR = CR_PAGE_ER;
+                FLASH->ADDR = (uintptr_t)real_flash_ptr;
+                FLASH->CTLR = CR_STRT_Set | CR_PAGE_ER;
+
+                // Wait for erase to complete (approx 3ms)
+                while (FLASH->STATR & FLASH_STATR_BSY)
+                    ;
+
+                // --- STEP B: Prepare the Programming Buffer ---
+                FLASH->CTLR = CR_PAGE_PG;              // Set to Page Programming mode
+                FLASH->CTLR = CR_BUF_RST | CR_PAGE_PG; // Reset the internal 64-byte hardware buffer
+                FLASH->ADDR = (uintptr_t)real_flash_ptr;
+
+                // Wait for buffer reset
+                while (FLASH->STATR & FLASH_STATR_BSY)
+                    ;
+
+                // --- STEP C: Load 64 bytes into the Hardware Buffer ---
+                // 64 bytes = 16 words (32-bit)
+                for (int i = 0; i < 16; i++)
+                {
+                    // Write the 32-bit word to the flash address
+                    real_flash_ptr[i] = data_to_write[i];
+
+                    // Trigger the hardware to load this word into the programming buffer
+                    FLASH->CTLR = CR_PAGE_PG | FLASH_CTLR_BUF_LOAD;
+
+                    // Wait for buffer load to complete
+                    while (FLASH->STATR & FLASH_STATR_BSY)
+                        ;
+                }
+
+                // --- STEP D: Commit the Buffer to Flash ---
+                FLASH->CTLR = CR_PAGE_PG | CR_STRT_Set;
+
+                // Wait for the actual write to complete (approx 3ms)
+                while (FLASH->STATR & FLASH_STATR_BSY)
+                    ;
+
+                // 3. Clean up and increment pointer
+                flash_pointer += 64;
+                master_sent_Flash_Write_Page = 0;
+
+                // Re-enable I2C if necessary
+                Enable_I2C(1);
+            }
         }
 
         if (master_sent_Flash_Get_Version)

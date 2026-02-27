@@ -280,7 +280,7 @@ int hermes_packet_flush()
 
 		if ((loops % 1000000) == 999999)
 		{
-			if (HERMES_PACKET_VERBOSITY > 1)
+			if (HERMES_PACKET_VERBOSITY > 0)
 			{
 				printf("-LOG- WARNING PACKET, hermes_packet_flush: there were %i USB reading loops. Is the device responding?\n", loops + 1);
 			}

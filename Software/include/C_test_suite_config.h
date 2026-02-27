@@ -52,7 +52,7 @@
 #define Ch32V003_bootloader_jump_testing_addr 0x48
 #define Ch32V003_bootloader_jump_testing_boot_addr 0x48
 
-#define CH32V003_bootloader_get_version_testing 1
+#define CH32V003_bootloader_get_version_testing 0
 #define CH32V003_bootloader_get_version_testing_addr 0x48
 
 #define FLASH_READ_SIZE 64
@@ -65,12 +65,12 @@
 #define CH32V003_FLASH_read_testing_verbose 0 // log commands on 1 or just dump flash on 0
 #define CH32V003_FLASH_read_testing_addr 0x48
 
-#define CH32V003_FLASH_easy_read_testing 1
+#define CH32V003_FLASH_easy_read_testing 0
 // only prints the data. is faster. uses hermes_easy_I2C_add_read_flash and automatic pointer advancing
 // takes 3 1/2 minutes
 #define CH32V003_FLASH_easy_read_testing_addr 0x48
 #define CH32V003_FLASH_easy_read_testing_reads_in_packet 2 // limit is 2. probably due to max packet size limit
 
-#define CH32V003_FLASH_WRITE_testing 0
+#define CH32V003_FLASH_WRITE_testing 1
 #define CH32V003_FLASH_WRITE_addr 0x48
 #define CH32V003_FLASH_WRITE_Flash_addres_for_test 0x08003C00
