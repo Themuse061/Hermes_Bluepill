@@ -121,10 +121,9 @@ int main(void)
 	}
 }
 
-void USB_recieve_interrupt()
+void USB_recieve_interrupt(uint8_t *recieve_buffer, int len)
 {
 	debug_led_usb_busy(1);
-	int len = hermes_USB_recieve_data(buf, 256);
 
 	if (len) // If any data was read
 	{
@@ -136,7 +135,7 @@ void USB_recieve_interrupt()
 		int command_idx = 0;
 		while ((current_length + 1) < len && command_idx < 16)
 		{
-			uint8_t cmd_len = buf[current_length];
+			uint8_t cmd_len = recieve_buffer[current_length];
 
 			// Validate length to prevent infinite loops or buffer overreads
 			if (cmd_len == 0 || (current_length + cmd_len) > len)
@@ -145,7 +144,7 @@ void USB_recieve_interrupt()
 			}
 
 			// Uses length to copy commands into their arrays
-			memcpy(&USB_Commands[command_idx][0], &buf[current_length], cmd_len);
+			memcpy(&USB_Commands[command_idx][0], &recieve_buffer[current_length], cmd_len);
 
 			// moves processed data pointer (current_length) to first byte of new data
 			current_length += cmd_len;

@@ -6,6 +6,9 @@
 #include <libopencm3/usb/cdc.h>
 #include <libopencm3/cm3/nvic.h>
 #include <debug_leds.h>
+#define MAX_TRANSFER_SIZE 1024
+static uint8_t big_rx_buffer[MAX_TRANSFER_SIZE];
+static uint32_t big_rx_idx = 0;
 
 #define USE_INTERRUPT 1 // 1 or 0
 
@@ -95,16 +98,11 @@ uint16_t USB_send_data(void *buf, uint16_t len)
 
 /** Called when USB writes to the device
  */
-void __attribute__((weak)) USB_recieve_interrupt()
+// weak recieve IT for echoing the data
+void __attribute__((weak)) USB_recieve_interrupt(uint8_t *recieve_buffer, int len)
 {
 
-	char buf[64];
-	int len = hermes_USB_recieve_data(buf, 64);
-
-	if (len)
-	{
-		USB_send_data(buf, len);
-	}
+	USB_send_data(recieve_buffer, len);
 }
 
 void __attribute__((weak)) USB_transmit_interrupt()
@@ -292,10 +290,36 @@ static enum usbd_request_return_codes cdcacm_control_request(usbd_device *usbd_d
 static void cdcacm_data_rx_cb(usbd_device *usbd_dev, uint8_t ep)
 {
 	(void)ep;
-	(void)usbd_dev;
+	uint8_t temp_pkt[64];
 
-	rx_just_recieved = 1;
-	USB_recieve_interrupt();
+	// 1. Grab the current packet from hardware
+	int len = usbd_ep_read_packet(usbd_dev, 0x01, temp_pkt, 64);
+
+	if (len > 0)
+	{
+		// 2. Copy into the accumulator
+		if (big_rx_idx + len <= MAX_TRANSFER_SIZE)
+		{
+			for (int i = 0; i < len; i++)
+			{
+				big_rx_buffer[big_rx_idx++] = temp_pkt[i];
+			}
+		}
+	}
+
+	// 3. Is this the end of the message? (Short packet logic)
+	if (len < 64)
+	{
+		// --- THIS IS THE MOMENT MAIN IS STOPPED ---
+
+		// Call your processing function with the full buffer
+		USB_recieve_interrupt(big_rx_buffer, big_rx_idx);
+
+		// Reset for the next message
+		big_rx_idx = 0;
+
+		// --- AFTER THIS, CONTROL RETURNS TO MAIN ---
+	}
 }
 
 static void cdcacm_data_tx_cb(usbd_device *usbd_dev, uint8_t ep)
