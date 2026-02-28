@@ -25,8 +25,8 @@
 uint8_t USB_Commands[USB_Command_max_command_amount][USB_Command_max_length] = {0};
 volatile int USB_data_recieved = 0;
 
-volatile uint8_t *usb_recieve_buffer;
-volatile int usb_len;
+uint8_t *usb_recieve_buffer;
+int usb_len;
 
 uint32_t led_millis;
 int led_state = 0;
