@@ -23,10 +23,10 @@
 // variables
 
 uint8_t USB_Commands[USB_Command_max_command_amount][USB_Command_max_length] = {0};
-int USB_data_recieved = 0;
+volatile int USB_data_recieved = 0;
 
-uint8_t *usb_recieve_buffer;
-int usb_len;
+volatile uint8_t *usb_recieve_buffer;
+volatile int usb_len;
 
 uint32_t led_millis;
 int led_state = 0;
@@ -178,6 +178,10 @@ int main(void)
 			}
 			USB_data_recieved = 0;
 			debug_led_parsing_usb_command(0);
+		}
+		else if (USB_data_recieved > 1)
+		{
+			write_ladder_red(15);
 		}
 	}
 }

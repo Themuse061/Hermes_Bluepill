@@ -192,17 +192,11 @@ static int hermes_read_usb_and_put_it_into_some_buffer(uint8_t *new_data_place)
 	if (data_in_buffer_amount)
 	{
 
-		if (HERMES_PACKET_VERBOSITY > 1)
-		{
-			printf("-LOG- VERBOSE PACKET, hermes_read_usb_and_put_it_into_some_buffer: there are %i bytes in buffer\n", data_in_buffer_amount);
-			printf("-LOG- VERBOSE PACKET, hermes_read_usb_and_put_it_into_some_buffer: copying data to some buffer\n");
-		}
 		hermes_USB_recieve(new_data_place, data_in_buffer_amount);
 
-		// DUMP level log
-		if (HERMES_PACKET_VERBOSITY > 2)
+		if (HERMES_PACKET_VERBOSITY > 1)
 		{
-			printf("-LOG- DUMP PACKET, hermes_read_usb_and_put_it_into_some_buffer: The read data was\n-LOG- ");
+			printf("-LOG- DUMP PACKET, hermes_read_usb_and_put_it_into_some_buffer: there are %i bytes in buffer. The read data was\n-LOG- ", data_in_buffer_amount);
 
 			for (int i = 0; i < data_in_buffer_amount; i++)
 			{
