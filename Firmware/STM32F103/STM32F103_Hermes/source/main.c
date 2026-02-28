@@ -20,6 +20,18 @@
 #include <string.h>
 #include "debug_leds.h"
 
+// variables
+
+uint8_t USB_Commands[USB_Command_max_command_amount][USB_Command_max_length] = {0};
+int USB_data_recieved = 0;
+
+uint8_t *usb_recieve_buffer;
+int usb_len;
+
+uint32_t led_millis;
+int led_state = 0;
+// functions
+
 void *memcpy(void *dest, const void *src, size_t n)
 {
 	unsigned char *d = dest;
@@ -39,9 +51,15 @@ void write_ladder_red(int value)
 	gpio_port_write(GPIOA, state);
 }
 
-uint8_t buf[256];
-uint8_t USB_Commands[USB_Command_max_command_amount][USB_Command_max_length] = {0};
-int USB_data_recieved = 0;
+void USB_recieve_interrupt(uint8_t *recieve_buffer, int len)
+{
+	usb_recieve_buffer = recieve_buffer;
+	usb_len = len;
+
+	USB_data_recieved++; // execute the commands in main
+}
+
+// main
 
 int main(void)
 {
@@ -58,16 +76,63 @@ int main(void)
 	debug_led_usb_busy(0);
 	debug_led_i2c_busy(0);
 	debug_led_parsing_usb_command(0);
+	led_millis = get_tick();
 
 	// main loop
 	while (1)
 	{
-		delay_ms(800);
-		write_ladder_red(0);
-		delay_ms(800);
-		write_ladder_red(1);
+
+		// Led signaling
+		if (get_tick() - led_millis >= 100)
+		{
+			if (led_state)
+			{
+				led_millis = get_tick();
+				led_state = 0;
+				write_ladder_red(0);
+			}
+			else
+			{
+				led_millis = get_tick();
+				led_state = 1;
+				write_ladder_red(1);
+			}
+		}
+
+		// on USB recieve
 		if (USB_data_recieved == 1)
 		{
+
+			debug_led_usb_busy(1);
+
+			if (usb_len) // If any data was read
+			{
+				// reset commands
+				memset(USB_Commands, 0, sizeof(USB_Commands));
+
+				// Put commands into USB_Commands
+				int current_length = 0;
+				int command_idx = 0;
+				while ((current_length + 1) < usb_len && command_idx < 16)
+				{
+					uint8_t cmd_len = usb_recieve_buffer[current_length];
+
+					// Validate length to prevent infinite loops or buffer overreads
+					if (cmd_len == 0 || (current_length + cmd_len) > usb_len)
+					{
+						break;
+					}
+
+					// Uses length to copy commands into their arrays
+					memcpy(&USB_Commands[command_idx][0], &usb_recieve_buffer[current_length], cmd_len);
+
+					// moves processed data pointer (current_length) to first byte of new data
+					current_length += cmd_len;
+					command_idx++;
+				}
+			}
+			debug_led_usb_busy(0);
+
 			debug_led_parsing_usb_command(1);
 
 			// Execute the commands
@@ -114,43 +179,5 @@ int main(void)
 			USB_data_recieved = 0;
 			debug_led_parsing_usb_command(0);
 		}
-		else if (USB_data_recieved)
-		{
-			// USB data recieve > 1 so there was command overflow
-		}
 	}
-}
-
-void USB_recieve_interrupt(uint8_t *recieve_buffer, int len)
-{
-	debug_led_usb_busy(1);
-
-	if (len) // If any data was read
-	{
-		// reset commands
-		memset(USB_Commands, 0, sizeof(USB_Commands));
-
-		// Put commands into USB_Commands
-		int current_length = 0;
-		int command_idx = 0;
-		while ((current_length + 1) < len && command_idx < 16)
-		{
-			uint8_t cmd_len = recieve_buffer[current_length];
-
-			// Validate length to prevent infinite loops or buffer overreads
-			if (cmd_len == 0 || (current_length + cmd_len) > len)
-			{
-				break;
-			}
-
-			// Uses length to copy commands into their arrays
-			memcpy(&USB_Commands[command_idx][0], &recieve_buffer[current_length], cmd_len);
-
-			// moves processed data pointer (current_length) to first byte of new data
-			current_length += cmd_len;
-			command_idx++;
-		}
-		USB_data_recieved++; // execute the commands in main
-	}
-	debug_led_usb_busy(0);
 }

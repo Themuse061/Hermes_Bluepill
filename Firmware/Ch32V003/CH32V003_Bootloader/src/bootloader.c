@@ -123,6 +123,15 @@ void onWrite(uint8_t reg, uint8_t length)
         master_sent_Flash_Read_Page = 1;
         break;
 
+    case Command_ID_I2C_Slave_Flash_Write_Page:
+        if (length == 65)
+        {
+            Enable_I2C(0);
+            master_sent_Flash_Write_Page = 1;
+        }
+
+        break;
+
     default:
         break;
     }

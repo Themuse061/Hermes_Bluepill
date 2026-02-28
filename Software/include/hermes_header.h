@@ -13,7 +13,7 @@
 #define HERMES_VERBOSITY_USB 1
 // opening ports, sending packets, reading buffer
 
-#define HERMES_PACKET_VERBOSITY 3
+#define HERMES_PACKET_VERBOSITY 1
 
 #define HERMES_ADD_VERBOSITY_USB 1
 
