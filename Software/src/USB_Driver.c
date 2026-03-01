@@ -11,7 +11,7 @@ static struct sp_event_set *event_set = NULL;
 
 int hermes_USB_init(const char *port_name, int baud_rate)
 {
-    if (HERMES_ADD_VERBOSITY_USB > 1)
+    if (HERMES_VERBOSITY_USB > 1)
     {
         printf("-LOG- VERBOSE USB, hermes_USB_init: Initializing USB\n");
     }
@@ -48,7 +48,7 @@ int hermes_USB_init(const char *port_name, int baud_rate)
 void hermes_USB_deinit(void)
 {
 
-    if (HERMES_ADD_VERBOSITY_USB > 1)
+    if (HERMES_VERBOSITY_USB > 1)
     {
         printf("-LOG- VERBOSE USB, hermes_USB_deinit: Denitializing USB\n");
     }
@@ -69,9 +69,9 @@ void hermes_USB_deinit(void)
 
 int hermes_USB_send(const unsigned char *data, int length)
 {
-    if (HERMES_ADD_VERBOSITY_USB > 1)
+    if (HERMES_VERBOSITY_USB > 1)
     {
-        printf("-LOG- VERBOSE USB, hermes_USB_send: Sending data:\n");
+        printf("-LOG- VERBOSE USB, hermes_USB_send: Sending data (without added bytes):\n-LOG- ");
         for (int i = 0; i < length; i++)
         {
             printf("%02X ", data[i]);
@@ -79,15 +79,90 @@ int hermes_USB_send(const unsigned char *data, int length)
         printf("\n");
     }
 
+    // check how many packets 64 byte we are sending
+
+    int packet_amount = 0;
+
+    for (int i = 0; i < length; i += 63)
+    {
+        packet_amount++;
+    }
+
+    int final_data_length = length + packet_amount;
+
+    // allocate memory for temporary data array
+    uint8_t *write_data_with_overhead = malloc(final_data_length);
+
+    // Copy write data BUT add USB overhead
+    int data_iterator = 0;
+    int already_full = 0;
+    int packets_added = 0;
+
+    while (already_full < final_data_length)
+    {
+        if (already_full % 64 == 0) // Start of a new USB packet
+        {
+            packets_added++;
+
+            if (packets_added == packet_amount)
+            {
+                write_data_with_overhead[already_full] = 0x01; // Last packet
+            }
+            else
+            {
+                write_data_with_overhead[already_full] = 0x00; // More coming
+            }
+        }
+        else
+        {
+            // Only copy if we still have source data left
+            if (data_iterator < length)
+            {
+                write_data_with_overhead[already_full] = data[data_iterator];
+                data_iterator++;
+            }
+            else
+            {
+                write_data_with_overhead[already_full] = 0x00; // Padding for the rest of the packet
+            }
+        }
+        already_full++;
+    }
+
+    // every packet has 0 as first byte, except lst one
+
+    // check if port is open
     if (port == NULL)
         return -1;
-    // Timeout 0 means wait indefinitely
-    return sp_blocking_write(port, data, length, 0);
+
+    if (HERMES_VERBOSITY_USB > 2)
+    {
+        printf("-LOG- DUMP USB, hermes_USB_send: Sending %i packets of data (With overhead):", packet_amount);
+        for (int i = 0; i < final_data_length; i++)
+        {
+            if (i % 16 == 0)
+            {
+                printf("\n-LOG- %i: ", i);
+            }
+            printf("%02X ", write_data_with_overhead[i]);
+        }
+        printf("\n");
+    }
+
+    // send the data
+    int return_data = sp_blocking_write(port, write_data_with_overhead, final_data_length, 0); // Timeout 0 means wait indefinitely
+
+    // return
+    if (return_data > 0)
+    {
+        return return_data - packet_amount;
+    }
+    return return_data;
 }
 
 int hermes_USB_recieve_with_timeout(unsigned char *buffer, int length, unsigned int timeout_ms)
 {
-    if (HERMES_ADD_VERBOSITY_USB > 1)
+    if (HERMES_VERBOSITY_USB > 1)
     {
         printf("-LOG- VERBOSE USB, hermes_USB_recieve_with_timeout: Trying to recieve data. len: %i. timeout: %i\n", length, timeout_ms);
     }
@@ -118,7 +193,7 @@ int hermes_USB_check_recieve_buffer(void)
 int hermes_USB_wait_for_recieve(unsigned int max_delay_ms)
 {
 
-    if (HERMES_ADD_VERBOSITY_USB > 1)
+    if (HERMES_VERBOSITY_USB > 1)
     {
         printf("-LOG- VERBOSE USB, hermes_USB_wait_for_recieve: waiting up to %ims for a read\n", max_delay_ms);
     }

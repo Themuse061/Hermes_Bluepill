@@ -6,7 +6,7 @@
 #include <libopencm3/usb/cdc.h>
 #include <libopencm3/cm3/nvic.h>
 #include <debug_leds.h>
-#define MAX_TRANSFER_SIZE 1024
+#define MAX_TRANSFER_SIZE 2048
 static uint8_t big_rx_buffer[MAX_TRANSFER_SIZE];
 static uint32_t big_rx_idx = 0;
 
@@ -292,6 +292,8 @@ static void cdcacm_data_rx_cb(usbd_device *usbd_dev, uint8_t ep)
 	(void)ep;
 	uint8_t temp_pkt[64];
 
+	
+
 	// 1. Grab the current packet from hardware
 	int len = usbd_ep_read_packet(usbd_dev, 0x01, temp_pkt, 64);
 
@@ -300,15 +302,15 @@ static void cdcacm_data_rx_cb(usbd_device *usbd_dev, uint8_t ep)
 		// 2. Copy into the accumulator
 		if (big_rx_idx + len <= MAX_TRANSFER_SIZE)
 		{
-			for (int i = 0; i < len; i++)
+			for (int i = 1; i < len; i++)
 			{
 				big_rx_buffer[big_rx_idx++] = temp_pkt[i];
 			}
 		}
 	}
 
-	// 3. Is this the end of the message? (Short packet logic)
-	if (len < 64)
+	// Check First byte if it is last message
+	if (temp_pkt[0] == 1)
 	{
 		// --- THIS IS THE MOMENT MAIN IS STOPPED ---
 

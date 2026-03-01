@@ -271,13 +271,69 @@ int main()
 			0x7F, 0x02, 0xD4, 0x29};
 
 		// code
-		hermes_send_echo(test_send_echo_data, sizeof(test_send_echo_data));
+		for (int i = 2; i < sizeof(test_send_echo_data); i++)
+		{
+			printf("Testing %i bytes (%i with  overhead)...\n", i, 2 + i + 10);
+			hermes_send_echo(test_send_echo_data, i);
+			delay_ms(5);
+
+			if (memcmp(test_send_echo_data, &hermes_recieve_buffer[0][2], i) == 0)
+			{
+				printf("Good!\n\n", i);
+			}
+			else
+			{
+				printf("Bad\n\n", i);
+			}
+		}
 
 		printf("expe: ");
 		print_array_in_hex(test_send_echo_data, sizeof(test_send_echo_data));
 
 		printf("read: ");
 		print_array_in_hex(&hermes_recieve_buffer[0][2], sizeof(test_send_echo_data));
+	}
+
+	if (test_multiple_long_echo)
+	{
+		printf("\n\n=========== test_multiple_long_echo ===========\n");
+
+		// variables
+		uint8_t test_send_multiple_echo_data[] = {
+			// First 16 bytes: 10, 11, 12...
+			0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
+			0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F,
+			// Random data (48 bytes)
+			0x4F, 0x92, 0xBC, 0x07, 0xE2, 0x33, 0xA8, 0x5D,
+			0x61, 0xCF, 0x14, 0x8A, 0x2B, 0x90, 0xFD, 0x44,
+			0x3E, 0x76, 0xBB, 0x21, 0x09, 0xEF, 0x55, 0x82,
+			0xCC, 0x1D, 0x47, 0x30, 0x6E, 0x9A, 0xB3, 0x5C,
+			0x7F, 0x02, 0xD4, 0x29, 0x8B, 0x67, 0x11, 0xA5,
+			0x7F, 0x02, 0xD4, 0x29, 0x8B, 0x67, 0x11, 0xA5,
+			0x7F, 0x02, 0xD4, 0x29, 0x8B, 0x67, 0x11, 0xA5,
+			0x7F, 0x02, 0xD4, 0x29, 0x8B, 0x67, 0x11, 0xA5,
+			0x7F, 0x02, 0xD4, 0x29, 0x8B, 0x67, 0x11, 0xA5,
+			0xEE, 0x38, 0x4D, 0x22, 0x91, 0x0C, 0xF6, 0x84,
+			0x7F, 0x02, 0xD4, 0x29};
+
+		// code
+		for (int i = 0; i < 15; i++)
+		{
+			hermes_add_echo(test_send_multiple_echo_data, sizeof(test_send_multiple_echo_data));
+		}
+
+		hermes_packet_flush();
+		printf("expe: ");
+		print_array_in_hex(test_send_multiple_echo_data, sizeof(test_send_multiple_echo_data));
+
+		printf("read: ");
+
+		for (int i = 0; i < 15; i++)
+		{
+			printf("Echo number %i: ", i);
+			print_array_in_hex(&hermes_recieve_buffer[i][2], sizeof(test_send_multiple_echo_data));
+			printf("\n");
+		}
 	}
 
 	if (Test_TCA9554_I2C_write)
@@ -342,6 +398,7 @@ int main()
 		hermes_add_I2C_write(TCA9554_ADDR, TCA9554_on_delay, 2);   // set high
 		hermes_add_delay_ms(200);								   // delay 200ms
 		hermes_add_I2C_write(TCA9554_ADDR, TCA9554_off_delay, 2);  // set low
+		hermes_add_ping();
 
 		hermes_packet_flush(); // flush stack
 	}

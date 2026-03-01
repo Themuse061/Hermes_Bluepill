@@ -53,10 +53,12 @@ void write_ladder_red(int value)
 
 void USB_recieve_interrupt(uint8_t *recieve_buffer, int len)
 {
+	debug_led_usb_busy(1);
 	usb_recieve_buffer = recieve_buffer;
 	usb_len = len;
 
 	USB_data_recieved++; // execute the commands in main
+	debug_led_usb_busy(0);
 }
 
 // main
@@ -102,8 +104,7 @@ int main(void)
 		// on USB recieve
 		if (USB_data_recieved == 1)
 		{
-
-			debug_led_usb_busy(1);
+			debug_led_parsing_usb_command(1);
 
 			if (usb_len) // If any data was read
 			{
@@ -117,12 +118,6 @@ int main(void)
 				{
 					uint8_t cmd_len = usb_recieve_buffer[current_length];
 
-					// Validate length to prevent infinite loops or buffer overreads
-					if (cmd_len == 0 || (current_length + cmd_len) > usb_len)
-					{
-						break;
-					}
-
 					// Uses length to copy commands into their arrays
 					memcpy(&USB_Commands[command_idx][0], &usb_recieve_buffer[current_length], cmd_len);
 
@@ -130,10 +125,15 @@ int main(void)
 					current_length += cmd_len;
 					command_idx++;
 				}
-			}
-			debug_led_usb_busy(0);
 
-			debug_led_parsing_usb_command(1);
+				// reset usb buffer
+				// if this is first packet, reset the buffer
+
+				for (int i = 0; i < usb_len; i++)
+				{
+					usb_recieve_buffer[i] = 0;
+				}
+			}
 
 			// Execute the commands
 			for (int i = 0; i < 16 && USB_Commands[i][USB_Command_Byte_Length] != 0; i++)

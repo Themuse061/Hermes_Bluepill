@@ -2,6 +2,7 @@
 
 #define Test_ping_with_hermes_USB_sends 0
 // Uses USB_drivers.c directly
+// MIGHT NOT WORK
 
 #define Test_ping_with_Hermes_stack_and_manual_read 0
 // Adds to stack, flushes and reads manually
@@ -15,29 +16,32 @@
 #define Test_echo_add 0
 // adds echo to stack and flushes blindly
 
-#define Test_hermes_flush 1
+#define Test_hermes_flush 0
 // sends 5 pings and uses normal flush
 
-#define Test_hermes_flush_long 1
+#define Test_hermes_flush_long 0
 // sends 15 pings and uses normal flush
 
 #define test_send_ping 0
 // Uses ping send instead of add
 
-#define test_send_echo 1
+#define test_send_echo 0
 // Uses echo send
 
 #define test_long_echo 1
-// uses echo send and sends echo thats 100 bytes long
+// uses echo send and sends echos from 1 to 100 len
+
+#define test_multiple_long_echo 0
+// uses echo send and sends 15 echo thats 100 bytes long
 
 #define TCA9554_ADDR 0x38
 #define TCA9554_REG_OUTPUT 0x01
 #define TCA9554_REG_CONFIG 0x03
 
-#define Test_TCA9554_I2C_write 1
+#define Test_TCA9554_I2C_write 0
 // Uses I2C write send
 
-#define Test_CH32V003_I2C_write_and_delay 0
+#define Test_CH32V003_I2C_write_and_delay 1
 // Uses I2C write add and delay_ms add
 
 #define Hot_plate_address 0x28
