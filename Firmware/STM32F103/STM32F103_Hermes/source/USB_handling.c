@@ -6,6 +6,7 @@
 #include <libopencm3/usb/cdc.h>
 #include <libopencm3/cm3/nvic.h>
 #include <debug_leds.h>
+#include "systick.h"
 #define MAX_TRANSFER_SIZE 2048
 static uint8_t big_rx_buffer[MAX_TRANSFER_SIZE];
 static uint32_t big_rx_idx = 0;
@@ -291,8 +292,6 @@ static void cdcacm_data_rx_cb(usbd_device *usbd_dev, uint8_t ep)
 {
 	(void)ep;
 	uint8_t temp_pkt[64];
-
-	
 
 	// 1. Grab the current packet from hardware
 	int len = usbd_ep_read_packet(usbd_dev, 0x01, temp_pkt, 64);

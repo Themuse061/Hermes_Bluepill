@@ -68,10 +68,35 @@ void initialize_I2C()
 	i2c_peripheral_enable(I2C1);
 }
 
+void initialize_USART()
+{
+	// Enable clocks
+	rcc_periph_clock_enable(RCC_GPIOA);
+	rcc_periph_clock_enable(RCC_USART1);
+
+	// Setup GPIO pins for USART1 TX/RX
+	gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_50_MHZ,
+				  GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, GPIO_USART1_TX);
+	gpio_set_mode(GPIOA, GPIO_MODE_INPUT,
+				  GPIO_CNF_INPUT_FLOAT, GPIO_USART1_RX);
+
+	// Setup USART parameters
+	usart_set_baudrate(USART1, 115220);
+	usart_set_databits(USART1, 8);
+	usart_set_stopbits(USART1, USART_STOPBITS_1);
+	usart_set_mode(USART1, USART_MODE_TX);
+	usart_set_parity(USART1, USART_PARITY_NONE);
+	usart_set_flow_control(USART1, USART_FLOWCONTROL_NONE);
+
+	// Enable USART
+	usart_enable(USART1);
+}
+
 void hardware_initalization()
 {
 	initialize_RCC();
 	hermes_USB_initialization();
 	initialize_GPIO();
 	initialize_I2C();
+	initialize_USART();
 }

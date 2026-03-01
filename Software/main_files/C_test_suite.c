@@ -275,7 +275,6 @@ int main()
 		{
 			printf("Testing %i bytes (%i with  overhead)...\n", i, 2 + i + 10);
 			hermes_send_echo(test_send_echo_data, i);
-			delay_ms(5);
 
 			if (memcmp(test_send_echo_data, &hermes_recieve_buffer[0][2], i) == 0)
 			{
