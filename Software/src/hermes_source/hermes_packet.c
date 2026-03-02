@@ -330,7 +330,7 @@ int hermes_packet_parse_USB()
 	if (read_data_amount)
 	{
 		// reset recieve buffer
-		memset(hermes_recieve_buffer, 0, sizeof(hermes_USB_recieve));
+		memset(hermes_recieve_buffer, 0, sizeof(hermes_recieve_buffer));
 
 		// Parse that data
 		int buffer_ptr = 0;

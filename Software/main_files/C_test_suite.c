@@ -271,7 +271,7 @@ int main()
 			0x7F, 0x02, 0xD4, 0x29};
 
 		// code
-		for (int i = 2; i < sizeof(test_send_echo_data); i++)
+		for (int i = 1; i < sizeof(test_send_echo_data); i++)
 		{
 			printf("Testing %i bytes (%i with  overhead)...\n", i, 2 + i + 10);
 			hermes_send_echo(test_send_echo_data, i);
@@ -282,15 +282,9 @@ int main()
 			}
 			else
 			{
-				printf("Bad\n\n", i);
+				printf("---------- Bad ----------\n\n", i);
 			}
 		}
-
-		printf("expe: ");
-		print_array_in_hex(test_send_echo_data, sizeof(test_send_echo_data));
-
-		printf("read: ");
-		print_array_in_hex(&hermes_recieve_buffer[0][2], sizeof(test_send_echo_data));
 	}
 
 	if (test_multiple_long_echo)

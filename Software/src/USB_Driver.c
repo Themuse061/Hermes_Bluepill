@@ -69,6 +69,9 @@ void hermes_USB_deinit(void)
 
 int hermes_USB_send(const unsigned char *data, int length)
 {
+    if (length <= 0)
+        return 0;
+
     if (HERMES_VERBOSITY_USB > 1)
     {
         printf("-LOG- VERBOSE USB, hermes_USB_send: Sending data (without added bytes):\n-LOG- ");
@@ -79,85 +82,84 @@ int hermes_USB_send(const unsigned char *data, int length)
         printf("\n");
     }
 
-    // check how many packets 64 byte we are sending
+    if (port == NULL)
+        return -1;
 
-    int packet_amount = 0;
+    // Calculate how many 64-byte packets we need (63 bytes payload + 1 byte header)
+    int packet_amount = (length + 62) / 63; // Fast integer ceiling math
+    int final_padded_length = packet_amount * 64;
 
-    for (int i = 0; i < length; i += 63)
+    // Allocate memory for the padded packets
+    uint8_t *write_data_with_overhead = malloc(final_padded_length);
+    if (write_data_with_overhead == NULL)
     {
-        packet_amount++;
+        printf("-LOG- ERROR: malloc failed!\n");
+        return -1;
     }
 
-    int final_data_length = length + packet_amount;
-
-    // allocate memory for temporary data array
-    uint8_t *write_data_with_overhead = malloc(final_data_length);
-
-    // Copy write data BUT add USB overhead
-    int data_iterator = 0;
-    int already_full = 0;
-    int packets_added = 0;
-
-    while (already_full < final_data_length)
+    // Pre-fill everything with 0x00 so our padding is automatically applied
+    for (int i = 0; i < final_padded_length; i++)
     {
-        if (already_full % 64 == 0) // Start of a new USB packet
-        {
-            packets_added++;
+        write_data_with_overhead[i] = 0x00;
+    }
 
-            if (packets_added == packet_amount)
-            {
-                write_data_with_overhead[already_full] = 0x01; // Last packet
-            }
-            else
-            {
-                write_data_with_overhead[already_full] = 0x00; // More coming
-            }
+    int data_iterator = 0;
+
+    // Build the packets cleanly
+    for (int p = 0; p < packet_amount; p++)
+    {
+        int packet_start_index = p * 64;
+
+        // Set the header byte
+        if (p == packet_amount - 1)
+        {
+            write_data_with_overhead[packet_start_index] = 0x01; // Last packet
         }
         else
         {
-            // Only copy if we still have source data left
+            write_data_with_overhead[packet_start_index] = 0x00; // More coming
+        }
+
+        // Copy up to 63 bytes of payload into this packet
+        for (int i = 1; i <= 63; i++)
+        {
             if (data_iterator < length)
             {
-                write_data_with_overhead[already_full] = data[data_iterator];
+                write_data_with_overhead[packet_start_index + i] = data[data_iterator];
                 data_iterator++;
             }
             else
             {
-                write_data_with_overhead[already_full] = 0x00; // Padding for the rest of the packet
+                break; // Break early; memset already handled the 0x00 padding!
             }
         }
-        already_full++;
     }
-
-    // every packet has 0 as first byte, except lst one
-
-    // check if port is open
-    if (port == NULL)
-        return -1;
 
     if (HERMES_VERBOSITY_USB > 2)
     {
-        printf("-LOG- DUMP USB, hermes_USB_send: Sending %i packets of data (With overhead):", packet_amount);
-        for (int i = 0; i < final_data_length; i++)
+        printf("-LOG- DUMP USB, hermes_USB_send: Sending %i packets (%i bytes with overhead & padding):", packet_amount, final_padded_length);
+        for (int i = 0; i < final_padded_length; i++)
         {
             if (i % 16 == 0)
-            {
-                printf("\n-LOG- %i: ", i);
-            }
+                printf("\n-LOG- %3i: ", i);
             printf("%02X ", write_data_with_overhead[i]);
         }
         printf("\n");
     }
 
-    // send the data
-    int return_data = sp_blocking_write(port, write_data_with_overhead, final_data_length, 0); // Timeout 0 means wait indefinitely
+    // Send the data
+    int return_data = sp_blocking_write(port, write_data_with_overhead, final_padded_length, 0);
 
-    // return
-    if (return_data > 0)
+    // FREE THE MEMORY to prevent memory leaks!
+    free(write_data_with_overhead);
+
+    // Return the amount of ACTUAL payload bytes sent (if successful)
+    if (return_data == final_padded_length)
     {
-        return return_data - packet_amount;
+        return length;
     }
-    return return_data;
+
+    return return_data; // Return error code or partial write amount
 }
 
 int hermes_USB_recieve_with_timeout(unsigned char *buffer, int length, unsigned int timeout_ms)
