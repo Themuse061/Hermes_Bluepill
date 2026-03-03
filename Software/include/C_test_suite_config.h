@@ -10,38 +10,38 @@
 #define Test_ping_with_Hermes_parse_USB 0
 // Adds to stack, flushes and reads with parse USB
 
-#define Test_ping_with_Hermes_parse_USB_multiple_pings 1
+#define Test_ping_with_Hermes_parse_USB_multiple_pings 0
 // Adds multiple pings to stack, flushes and reads with parse USB
 
-#define Test_echo_add 1
+#define Test_echo_add 0
 // adds echo to stack and flushes blindly
 
-#define Test_hermes_flush 1
+#define Test_hermes_flush 0
 // sends 5 pings and uses normal flush
 
-#define Test_hermes_flush_long 1
+#define Test_hermes_flush_long 0
 // sends 15 pings and uses normal flush
 
-#define test_send_ping 1
+#define test_send_ping 0
 // Uses ping send instead of add
 
-#define test_send_echo 1
+#define test_send_echo 0
 // Uses echo send
 
-#define test_long_echo 1
+#define test_long_echo 0
 // uses echo send and sends echos from 1 to 100 len
 
-#define test_multiple_long_echo 1
+#define test_multiple_long_echo 0
 // uses echo send and sends 15 echo thats 100 bytes long
 
 #define TCA9554_ADDR 0x38
 #define TCA9554_REG_OUTPUT 0x01
 #define TCA9554_REG_CONFIG 0x03
 
-#define Test_TCA9554_I2C_write 1
+#define Test_TCA9554_I2C_write 0
 // Uses I2C write send
 
-#define Test_CH32V003_I2C_write_and_delay 1
+#define Test_CH32V003_I2C_write_and_delay 0
 // Uses I2C write add and delay_ms add
 
 #define Hot_plate_address 0x28
@@ -52,14 +52,14 @@
 #define dummy2_len 8
 #define dummy3_len 3
 
-#define Test_hot_plate_send_recieve 1
-#define Test_hot_plate_send_and_read 1
+#define Test_hot_plate_send_recieve 0
+#define Test_hot_plate_send_and_read 0
 
 #define CH32V003_bootloader_jump_testing 0
 #define Ch32V003_bootloader_jump_testing_addr 0x48
 #define Ch32V003_bootloader_jump_testing_boot_addr 0x48
 
-#define CH32V003_bootloader_get_version_testing 0
+#define CH32V003_bootloader_get_version_testing 1
 #define CH32V003_bootloader_get_version_testing_addr 0x48
 
 #define FLASH_READ_SIZE 64
@@ -72,9 +72,9 @@
 #define CH32V003_FLASH_read_testing_verbose 0 // log commands on 1 or just dump flash on 0
 #define CH32V003_FLASH_read_testing_addr 0x48
 
-#define CH32V003_FLASH_easy_read_testing 0
+#define CH32V003_FLASH_easy_read_testing 1
 // only prints the data. is faster. uses hermes_easy_I2C_add_read_flash and automatic pointer advancing
-// takes 3 1/2 minutes
+// takes 40s
 #define CH32V003_FLASH_easy_read_testing_addr 0x48
 #define CH32V003_FLASH_easy_read_testing_reads_in_packet 4 // limit is 4.  due to max packet size limit
 

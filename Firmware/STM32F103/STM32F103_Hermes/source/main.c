@@ -22,6 +22,9 @@
 #include "debug_leds.h"
 #include <stdarg.h>
 
+// defines
+#define DO_DEBUG_PRINTS 1
+
 // variables
 
 uint8_t USB_Commands[USB_Command_max_command_amount][USB_Command_max_length] = {0};
@@ -55,125 +58,128 @@ void usart_send_string(const char *str)
 // Supports: %c (char), %s (string), %d (int), %x (hex)
 void uart_printf(const char *format, ...)
 {
-	va_list args;
-	va_start(args, format);
-
-	char buffer[16]; // Buffer for number conversions
-
-	while (*format)
+	if (DO_DEBUG_PRINTS)
 	{
-		if (*format != '%')
+		va_list args;
+		va_start(args, format);
+
+		char buffer[16]; // Buffer for number conversions
+
+		while (*format)
 		{
-			usart_send_char(*format++);
-			continue;
-		}
+			if (*format != '%')
+			{
+				usart_send_char(*format++);
+				continue;
+			}
 
-		format++; // Skip '%'
+			format++; // Skip '%'
 
-		// --- Parse Flags & Width (Simple) ---
-		int width = 0;
-		int zero_pad = 0;
+			// --- Parse Flags & Width (Simple) ---
+			int width = 0;
+			int zero_pad = 0;
 
-		// Check for zero padding '0'
-		if (*format == '0')
-		{
-			zero_pad = 1;
+			// Check for zero padding '0'
+			if (*format == '0')
+			{
+				zero_pad = 1;
+				format++;
+			}
+
+			// Parse width (e.g., '2' in %02X)
+			while (*format >= '0' && *format <= '9')
+			{
+				width = width * 10 + (*format - '0');
+				format++;
+			}
+
+			// --- Parse Specifiers ---
+			switch (*format)
+			{
+			case 'c': // Char
+				usart_send_char((char)va_arg(args, int));
+				break;
+
+			case 's': // String
+			{
+				char *s = va_arg(args, char *);
+				while (*s)
+					usart_send_char(*s++);
+			}
+			break;
+
+			case 'd': // Integer
+			case 'i': // Integer (synonym)
+			{
+				int val = va_arg(args, int);
+				int i = 0;
+
+				if (val < 0)
+				{
+					usart_send_char('-');
+					val = -val;
+				}
+
+				if (val == 0)
+					buffer[i++] = '0';
+
+				while (val > 0)
+				{
+					buffer[i++] = (val % 10) + '0';
+					val /= 10;
+				}
+
+				// Handle Padding
+				while (i < width)
+				{
+					usart_send_char(zero_pad ? '0' : ' ');
+					width--;
+				}
+
+				// Print Reverse
+				while (i > 0)
+					usart_send_char(buffer[--i]);
+			}
+			break;
+
+			case 'x': // Hex (lower)
+			case 'X': // Hex (upper)
+			{
+				unsigned int val = va_arg(args, unsigned int);
+				int i = 0;
+				const char *hex_chars = (*format == 'x') ? "0123456789abcdef" : "0123456789ABCDEF";
+
+				if (val == 0)
+					buffer[i++] = '0';
+
+				while (val > 0)
+				{
+					buffer[i++] = hex_chars[val % 16];
+					val /= 16;
+				}
+
+				// Handle Padding (e.g. %02X needs 2 chars, if we have 1, print 1 '0')
+				while (i < width)
+				{
+					usart_send_char(zero_pad ? '0' : ' ');
+					width--;
+				}
+
+				while (i > 0)
+					usart_send_char(buffer[--i]);
+			}
+			break;
+
+			default: // Unrecognized, just print it literally (e.g. %%)
+				usart_send_char('%');
+				usart_send_char(*format);
+				break;
+			}
 			format++;
 		}
 
-		// Parse width (e.g., '2' in %02X)
-		while (*format >= '0' && *format <= '9')
-		{
-			width = width * 10 + (*format - '0');
-			format++;
-		}
-
-		// --- Parse Specifiers ---
-		switch (*format)
-		{
-		case 'c': // Char
-			usart_send_char((char)va_arg(args, int));
-			break;
-
-		case 's': // String
-		{
-			char *s = va_arg(args, char *);
-			while (*s)
-				usart_send_char(*s++);
-		}
-		break;
-
-		case 'd': // Integer
-		case 'i': // Integer (synonym)
-		{
-			int val = va_arg(args, int);
-			int i = 0;
-
-			if (val < 0)
-			{
-				usart_send_char('-');
-				val = -val;
-			}
-
-			if (val == 0)
-				buffer[i++] = '0';
-
-			while (val > 0)
-			{
-				buffer[i++] = (val % 10) + '0';
-				val /= 10;
-			}
-
-			// Handle Padding
-			while (i < width)
-			{
-				usart_send_char(zero_pad ? '0' : ' ');
-				width--;
-			}
-
-			// Print Reverse
-			while (i > 0)
-				usart_send_char(buffer[--i]);
-		}
-		break;
-
-		case 'x': // Hex (lower)
-		case 'X': // Hex (upper)
-		{
-			unsigned int val = va_arg(args, unsigned int);
-			int i = 0;
-			const char *hex_chars = (*format == 'x') ? "0123456789abcdef" : "0123456789ABCDEF";
-
-			if (val == 0)
-				buffer[i++] = '0';
-
-			while (val > 0)
-			{
-				buffer[i++] = hex_chars[val % 16];
-				val /= 16;
-			}
-
-			// Handle Padding (e.g. %02X needs 2 chars, if we have 1, print 1 '0')
-			while (i < width)
-			{
-				usart_send_char(zero_pad ? '0' : ' ');
-				width--;
-			}
-
-			while (i > 0)
-				usart_send_char(buffer[--i]);
-		}
-		break;
-
-		default: // Unrecognized, just print it literally (e.g. %%)
-			usart_send_char('%');
-			usart_send_char(*format);
-			break;
-		}
-		format++;
+		va_end(args);
 	}
-
-	va_end(args);
 }
 
 void *memcpy(void *dest, const void *src, size_t n)

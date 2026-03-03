@@ -1,6 +1,7 @@
 #include "hermes_header.h"
 #include "string.h"
 #include "Command_ID.h"
+#include "helper.h"
 
 int hermes_easy_I2C_reset(uint8_t addr)
 {
@@ -10,7 +11,9 @@ int hermes_easy_I2C_reset(uint8_t addr)
 	}
 
 	uint8_t hermes_reset_packet[] = {Command_ID_I2C_Slave_Reset_MCU};
-	return hermes_send_I2C_write(addr, hermes_reset_packet, 1);
+	int return_code = hermes_send_I2C_write(addr, hermes_reset_packet, 1);
+	delay_ms(300);
+	return return_code;
 }
 
 int hermes_easy_I2C_jump_to_bootloader(uint8_t addr)
@@ -26,7 +29,9 @@ int hermes_easy_I2C_jump_to_bootloader(uint8_t addr)
 	hermes_add_I2C_write(addr, command_reset, 1);			   // reset
 	hermes_add_delay_ms(250);								   // wait 250ms
 	hermes_add_I2C_write(addr, command_jump_to_bootloader, 1); // try to jump
-	return hermes_packet_flush();
+	int return_code = hermes_packet_flush();
+	delay_ms(500);
+	return return_code;
 }
 
 int hermes_easy_I2C_add_send_flash_pointer(uint8_t addr, uint32_t Flash_pointer)

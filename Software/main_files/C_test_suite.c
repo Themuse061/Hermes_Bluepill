@@ -708,16 +708,26 @@ int main()
 	{
 		printf("\n\n=========== CH32V003_bootloader_jump_testing ===========\n");
 		// reset
+		printf("first reset\n");
+		hermes_easy_I2C_reset(Ch32V003_bootloader_jump_testing_addr);
+
+		printf("second reset\n");
+		hermes_easy_I2C_reset(Ch32V003_bootloader_jump_testing_addr);
+
+		printf("third reset\n");
 		hermes_easy_I2C_reset(Ch32V003_bootloader_jump_testing_addr);
 
 		// jump to boot
+		printf("jump to bootloader\n");
 		hermes_easy_I2C_jump_to_bootloader(Ch32V003_bootloader_jump_testing_addr);
 		delay_ms(3000);
 
 		// reset
+		printf("reset after bootloader\n");
 		hermes_easy_I2C_reset(Ch32V003_bootloader_jump_testing_boot_addr);
 
 		// reset
+		printf("last reset\n");
 		hermes_easy_I2C_reset(Ch32V003_bootloader_jump_testing_addr);
 	}
 
@@ -858,6 +868,7 @@ int main()
 
 			// execute the reads
 			hermes_packet_flush();
+			delay_ms(300);
 
 			// parse the reads
 			// 1. Only ONE loop to iterate through the packets we actually received

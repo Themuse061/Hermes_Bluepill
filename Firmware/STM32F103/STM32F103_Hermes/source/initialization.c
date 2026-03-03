@@ -81,7 +81,7 @@ void initialize_USART()
 				  GPIO_CNF_INPUT_FLOAT, GPIO_USART1_RX);
 
 	// Setup USART parameters
-	usart_set_baudrate(USART1, 115220);
+	usart_set_baudrate(USART1, 250000);
 	usart_set_databits(USART1, 8);
 	usart_set_stopbits(USART1, USART_STOPBITS_1);
 	usart_set_mode(USART1, USART_MODE_TX);
