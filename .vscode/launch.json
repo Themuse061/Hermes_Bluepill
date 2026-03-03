@@ -20,6 +20,31 @@
             ],
             "runToEntryPoint": "main",
             "showDevDebugOutput": "none"
+        },
+        {
+            "name": "debug C test suite",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/Software/compiled/C_test_suite.exe",
+            "args": [],
+            "stopAtEntry": true,
+            "cwd": "${workspaceFolder}/Software",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "miDebuggerPath": "C:/Users/Muse/AppData/Roaming/xPacks/@xpack-dev-tools/gcc/14.2.0-2.1/.content/bin/gdb.exe",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set Disassembly Flavor to Intel",
+                    "text": "-gdb-set disassembly-flavor intel",
+                    "ignoreFailures": true
+                }
+            ]
         }
     ]
 }
