@@ -59,7 +59,7 @@
 #define Ch32V003_bootloader_jump_testing_addr 0x48
 #define Ch32V003_bootloader_jump_testing_boot_addr 0x48
 
-#define CH32V003_bootloader_get_version_testing 1
+#define CH32V003_bootloader_get_version_testing 0
 #define CH32V003_bootloader_get_version_testing_addr 0x48
 
 #define FLASH_READ_SIZE 64
@@ -78,6 +78,6 @@
 #define CH32V003_FLASH_easy_read_testing_addr 0x48
 #define CH32V003_FLASH_easy_read_testing_reads_in_packet 4 // limit is 4.  due to max packet size limit
 
-#define CH32V003_FLASH_WRITE_testing 0
+#define CH32V003_FLASH_WRITE_testing 1
 #define CH32V003_FLASH_WRITE_addr 0x48
 #define CH32V003_FLASH_WRITE_Flash_addres_for_test 0x08003C00

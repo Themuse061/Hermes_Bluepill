@@ -970,9 +970,6 @@ int main()
 		printf("write done\n");
 		printf("\n");
 
-		// wait
-		delay_ms(2000);
-
 		// send the flash pointer
 		printf("writing flash pointer: %02X\n", CH32V003_FLASH_WRITE_Flash_addres_for_test);
 		hermes_easy_I2C_add_send_flash_pointer(CH32V003_FLASH_WRITE_addr, CH32V003_FLASH_WRITE_Flash_addres_for_test);
@@ -985,6 +982,8 @@ int main()
 		hermes_packet_flush();
 		print_array_in_hex(&hermes_recieve_buffer[0][4], 64);
 		printf("\n");
+
+		int first_write_status = memcmp(&hermes_recieve_buffer[0][4], flash_write_testing_first_write, 64);
 
 		// send the flash pointer
 		printf("writing flash pointer: %02X\n", CH32V003_FLASH_WRITE_Flash_addres_for_test);
@@ -1000,9 +999,6 @@ int main()
 		printf("write done\n");
 		printf("\n");
 
-		// wait
-		delay_ms(2000);
-
 		// send the flash pointer
 		printf("writing flash pointer: %02X\n", CH32V003_FLASH_WRITE_Flash_addres_for_test);
 		hermes_easy_I2C_add_send_flash_pointer(CH32V003_FLASH_WRITE_addr, CH32V003_FLASH_WRITE_Flash_addres_for_test);
@@ -1015,8 +1011,27 @@ int main()
 		hermes_packet_flush();
 		print_array_in_hex(&hermes_recieve_buffer[0][4], 64);
 		printf("\n");
+		int second_write_status = memcmp(&hermes_recieve_buffer[0][4], flash_write_testing_second_write, 64);
 
-		printf("Reseting...\n");
+		printf("Status:\n");
+		if (first_write_status == 0)
+		{
+			printf("First write good!\n");
+		}
+		else
+		{
+			printf("----- First write BAD! -----\n");
+		}
+		if (second_write_status == 0)
+		{
+			printf("Second write good!\n");
+		}
+		else
+		{
+			printf("----- Second write BAD! -----\n");
+		}
+
+		printf("\nReseting...\n");
 		hermes_easy_I2C_reset(CH32V003_FLASH_WRITE_addr);
 	}
 

@@ -69,7 +69,6 @@ int hermes_easy_I2C_add_read_flash(uint8_t addr, int amount)
 }
 
 int hermes_easy_i2C_add_write_flash_64_bytes(uint8_t addr, uint8_t *data)
-
 {
 
 	if (HERMES_EASY_VERBOSITY > 1)
@@ -90,5 +89,8 @@ int hermes_easy_i2C_add_write_flash_64_bytes(uint8_t addr, uint8_t *data)
 	int length = 64;
 	memcpy(destination, source, length);
 
-	return hermes_add_I2C_write(addr, data, 65);
+	hermes_add_I2C_write(addr, flash_write_packet, 65);
+	hermes_add_delay_ms(50);
+
+	return 1;
 }
