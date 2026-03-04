@@ -65,6 +65,43 @@
             ]
         },
         {
+            "label": "build C Uploader",
+            "type": "shell",
+            "command": "C:/Users/Muse/AppData/Roaming/xPacks/@xpack-dev-tools/gcc/14.2.0-2.1/.content/bin/gcc.exe",
+            "args": [
+                "-g",
+                // 1. Compile all .c files in src
+                "${workspaceFolder}/Software/src/*.c",
+                // also include uploader.c
+                "${workspaceFolder}/Software/main_files/uploader.c",
+                // and in src/hermes_source
+                "${workspaceFolder}/Software/src/hermes_source/*.c",
+                // 2. Include header files (.h) from include
+                "-I",
+                "${workspaceFolder}/Software/include",
+                "-I",
+                "${workspaceFolder}/Universal_includes",
+                // 3. (NEW) Tell linker to look inside 'src' for library files
+                "-L",
+                "${workspaceFolder}/Software/src",
+                // 4. (NEW) Link against the DLL.
+                // GCC assumes "lib" prefix and ".dll" suffix.
+                // If your file is "libserialport-0.dll", use "-lserialport-0"
+                // If your file is "libserialport.dll", use "-lserialport"
+                "-lserialport",
+                // 5. Output file
+                "-o",
+                "${workspaceFolder}/Software/compiled/uploader.exe"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
+        },
+        {
             "label": "flash dark times",
             "type": "shell",
             "command": "platformio.exe run -d ${workspaceFolder}/Firmware/Ch32V003/dark_times --target upload --environment genericCH32V003F4P6",
