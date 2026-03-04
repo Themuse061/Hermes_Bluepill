@@ -21,10 +21,6 @@ const int BAUD_RATE = 115200;
 FILE *binary_file = NULL;
 bool is_hermes_connected = 0;
 
-/**
-.\uploader.exe --flash_start 0x08001800 --flash_size 0x2800 --path "C:\embedded_programming\Hermes_Bluepill\Firmware\Ch32V003\CH32V003_Blinky_With_I2C\.pio\build\genericCH32V003F4P6\firmware.bin"
-*/
-
 void exit_gracefully(int exit_code, const char *error_message)
 {
 	printf(error_message);
@@ -35,7 +31,7 @@ void exit_gracefully(int exit_code, const char *error_message)
 
 	if (is_hermes_connected)
 	{
-		/* code */
+		hermes_USB_deinit();
 	}
 
 	exit(exit_code);
@@ -44,6 +40,9 @@ void exit_gracefully(int exit_code, const char *error_message)
 // ---------- MAIN ---------- //
 int main(int argc, char const *argv[])
 {
+
+	// disable printf buffering
+	setvbuf(stdout, NULL, _IONBF, 0);
 
 	// Parse arguments
 	for (int i = 1; i < argc; i++) // start from first argument
@@ -107,28 +106,26 @@ int main(int argc, char const *argv[])
 	// check if user has specified the important things
 	if (binary_path == NULL)
 	{
-		printf("ERROR: You need to specify binary path!");
-		return 1;
+		exit_gracefully(1, "ERROR: You need to specify binary path!");
 	}
 
 	if (flash_start == FULL_UINT64)
 	{
-		printf("ERROR: You need to flash start address!");
-		return 1;
+
+		exit_gracefully(1, "ERROR: You need to flash start address!");
 	}
 
 	if (flash_size == FULL_UINT64)
 	{
-		printf("ERROR: You need to specify flash size!");
-		return 1;
+
+		exit_gracefully(1, "ERROR: You need to specify flash size!");
 	}
 
 	binary_file = fopen(binary_path, "rb");
 
 	if (binary_file == NULL)
 	{
-		printf("Error opening file");
-		return 1;
+		exit_gracefully(1, "error opening file!");
 	}
 
 	if (DO_DEBUG_PRINTS)
@@ -216,5 +213,5 @@ int main(int argc, char const *argv[])
 
 	hermes_easy_I2C_reset(I2C_bootloader_addr);
 
-	exit_gracefully(1, "everything good. exiting...");
+	exit_gracefully(0, "everything good. exiting...");
 }
