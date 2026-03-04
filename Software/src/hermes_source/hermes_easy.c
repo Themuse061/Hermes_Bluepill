@@ -16,19 +16,19 @@ int hermes_easy_I2C_reset(uint8_t addr)
 	return return_code;
 }
 
-int hermes_easy_I2C_jump_to_bootloader(uint8_t addr)
+int hermes_easy_I2C_jump_to_bootloader(uint8_t main_addr, uint8_t boot_addr)
 {
 	if (HERMES_EASY_VERBOSITY > 1)
 	{
-		printf("-LOG- VERBOSE EASY, hermes_easy_I2C_jump_to_bootloader: Jumping I2C addr 0x%02X, \n", addr);
+		printf("-LOG- VERBOSE EASY, hermes_easy_I2C_jump_to_bootloader: Jumping I2C addr main 0x%02X and addr boot, 0x%02X\n", main_addr, boot_addr);
 	}
 
 	uint8_t command_reset[] = {Command_ID_I2C_Slave_Reset_MCU};
 	uint8_t command_jump_to_bootloader[] = {Command_ID_I2C_Slave_Jump_To_Bootloader};
 
-	hermes_add_I2C_write(addr, command_reset, 1);			   // reset
-	hermes_add_delay_ms(250);								   // wait 250ms
-	hermes_add_I2C_write(addr, command_jump_to_bootloader, 1); // try to jump
+	hermes_add_I2C_write(main_addr, command_reset, 1);				// reset
+	hermes_add_delay_ms(250);										// wait 250ms
+	hermes_add_I2C_write(boot_addr, command_jump_to_bootloader, 1); // try to jump
 	int return_code = hermes_packet_flush();
 	delay_ms(500);
 	return return_code;

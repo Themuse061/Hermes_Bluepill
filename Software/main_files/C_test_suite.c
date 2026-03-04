@@ -719,7 +719,7 @@ int main()
 
 		// jump to boot
 		printf("jump to bootloader\n");
-		hermes_easy_I2C_jump_to_bootloader(Ch32V003_bootloader_jump_testing_addr);
+		hermes_easy_I2C_jump_to_bootloader(Ch32V003_bootloader_jump_testing_addr, Ch32V003_bootloader_jump_testing_addr);
 		delay_ms(3000);
 
 		// reset
@@ -741,7 +741,7 @@ int main()
 		uint8_t bootloader_get_version_command[] = {Command_ID_I2C_Slave_Flash_Get_Version};
 
 		// code
-		hermes_easy_I2C_jump_to_bootloader(CH32V003_bootloader_get_version_testing_addr);
+		hermes_easy_I2C_jump_to_bootloader(CH32V003_bootloader_get_version_testing_addr, CH32V003_bootloader_get_version_testing_addr);
 		hermes_send_I2C_write(CH32V003_bootloader_get_version_testing_addr, bootloader_get_version_command, 1);
 		delay_ms(50);
 		hermes_send_I2C_send_recieve(CH32V003_bootloader_get_version_testing_addr, 1, bootloader_get_data_to_read_amount, bootloader_get_version_command);
@@ -768,7 +768,7 @@ int main()
 		printf("Reseting...\n");
 		hermes_easy_I2C_reset(CH32V003_FLASH_read_testing_addr);
 		printf("Jumping to bootloader...\n");
-		hermes_easy_I2C_jump_to_bootloader(CH32V003_FLASH_read_testing_addr);
+		hermes_easy_I2C_jump_to_bootloader(CH32V003_FLASH_read_testing_addr, CH32V003_FLASH_read_testing_addr);
 		delay_ms(50);
 
 		for (int i = 0; i < FLASH_PAGE_AMOUNT; i++)
@@ -852,7 +852,7 @@ int main()
 		hermes_easy_I2C_reset(CH32V003_FLASH_easy_read_testing_addr);
 
 		printf("Jumping to bootloader...\n");
-		hermes_easy_I2C_jump_to_bootloader(CH32V003_FLASH_easy_read_testing_addr);
+		hermes_easy_I2C_jump_to_bootloader(CH32V003_FLASH_easy_read_testing_addr, CH32V003_FLASH_easy_read_testing_addr);
 
 		printf("writing flash pointer: %02X\n", Flash_Start);
 		hermes_easy_I2C_add_send_flash_pointer(CH32V003_FLASH_easy_read_testing_addr, Flash_Start);
@@ -940,7 +940,7 @@ int main()
 		printf("\n");
 
 		printf("Jumping to bootloader...\n");
-		hermes_easy_I2C_jump_to_bootloader(CH32V003_FLASH_WRITE_addr);
+		hermes_easy_I2C_jump_to_bootloader(CH32V003_FLASH_WRITE_addr, CH32V003_FLASH_WRITE_addr);
 		printf("\n");
 
 		// send the flash pointer

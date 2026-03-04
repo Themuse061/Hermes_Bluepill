@@ -77,15 +77,15 @@ int main(int argc, char const *argv[])
 		{
 			page_size = strtoul(argv[i + 1], NULL, 0);
 		}
-		else if (strcmp(argv[i], "--flash_size") == 0) // if we find --I2C_main_addr
+		else if (strcmp(argv[i], "--I2C_main_addr") == 0) // if we find --I2C_main_addr
 		{
 			I2C_main_addr = strtoul(argv[i + 1], NULL, 0);
 		}
-		else if (strcmp(argv[i], "--flash_size") == 0) // if we find --I2C_bootloader_addr
+		else if (strcmp(argv[i], "--I2C_bootloader_addr") == 0) // if we find --I2C_bootloader_addr
 		{
 			I2C_bootloader_addr = strtoul(argv[i + 1], NULL, 0);
 		}
-		else if (strcmp(argv[i], "--flash_size") == 0) // if we find --start_at_page
+		else if (strcmp(argv[i], "--start_at_page") == 0) // if we find --start_at_page
 		{
 			start_at_page = strtoul(argv[i + 1], NULL, 0);
 		}
@@ -180,7 +180,7 @@ int main(int argc, char const *argv[])
 	is_hermes_connected = 1;
 
 	printf("Jumping to bootloader...\n");
-	hermes_easy_I2C_jump_to_bootloader(I2C_bootloader_addr);
+	hermes_easy_I2C_jump_to_bootloader(I2C_main_addr, I2C_bootloader_addr);
 
 	// skip start_at_page pages
 	if (fseek(binary_file, start_at_page * page_size, SEEK_SET) != 0)
