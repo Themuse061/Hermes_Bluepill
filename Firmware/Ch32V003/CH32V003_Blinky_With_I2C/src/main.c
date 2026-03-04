@@ -7,7 +7,7 @@
 // ===================================================================================
 // Use 0x48 to match the Bootloader, or 0x09 if you prefer.
 // Just ensure your PC host script sends to the right address.
-#define I2C_ADDR 0x48
+#define I2C_ADDR 0x49
 
 // Commands
 #define Command_ID_I2C_Slave_Reset_MCU 0x00
